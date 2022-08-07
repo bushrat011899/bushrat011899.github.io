@@ -72,10 +72,16 @@
             
             const SKULL_SVG = `<svg width="1em" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Pro 6.1.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2022 Fonticons, Inc. --><path d="M416 400V464C416 490.5 394.5 512 368 512H320V464C320 455.2 312.8 448 304 448C295.2 448 288 455.2 288 464V512H224V464C224 455.2 216.8 448 208 448C199.2 448 192 455.2 192 464V512H144C117.5 512 96 490.5 96 464V400C96 399.6 96 399.3 96.01 398.9C37.48 357.8 0 294.7 0 224C0 100.3 114.6 0 256 0C397.4 0 512 100.3 512 224C512 294.7 474.5 357.8 415.1 398.9C415.1 399.3 416 399.6 416 400V400zM160 192C124.7 192 96 220.7 96 256C96 291.3 124.7 320 160 320C195.3 320 224 291.3 224 256C224 220.7 195.3 192 160 192zM352 320C387.3 320 416 291.3 416 256C416 220.7 387.3 192 352 192C316.7 192 288 220.7 288 256C288 291.3 316.7 320 352 320z"/></svg>`;
 
+            const GUN_SVG = `<svg width="1em" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Pro 6.1.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2022 Fonticons, Inc. --><path d="M544 64h-16V56C528 42.74 517.3 32 504 32S480 42.74 480 56V64H43.17C19.33 64 0 83.33 0 107.2v89.66C0 220.7 19.33 240 43.17 240c21.26 0 36.61 20.35 30.77 40.79l-40.69 158.4C27.41 459.6 42.76 480 64.02 480h103.8c14.29 0 26.84-9.469 30.77-23.21L226.4 352h94.58c24.16 0 45.5-15.41 53.13-38.28L398.6 240h36.1c8.486 0 16.62-3.369 22.63-9.373L480 208h64c17.67 0 32-14.33 32-32V96C576 78.33 561.7 64 544 64zM328.5 298.6C327.4 301.8 324.4 304 320.9 304H239.1L256 240h92.02L328.5 298.6zM480 160H64V128h416V160z"/></svg>`;
+
+            const RECEIPT_SVG = `<svg width="1em" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Pro 6.1.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2022 Fonticons, Inc. --><path d="M13.97 2.196C22.49-1.72 32.5-.3214 39.62 5.778L80 40.39L120.4 5.778C129.4-1.926 142.6-1.926 151.6 5.778L192 40.39L232.4 5.778C241.4-1.926 254.6-1.926 263.6 5.778L304 40.39L344.4 5.778C351.5-.3214 361.5-1.72 370 2.196C378.5 6.113 384 14.63 384 24V488C384 497.4 378.5 505.9 370 509.8C361.5 513.7 351.5 512.3 344.4 506.2L304 471.6L263.6 506.2C254.6 513.9 241.4 513.9 232.4 506.2L192 471.6L151.6 506.2C142.6 513.9 129.4 513.9 120.4 506.2L80 471.6L39.62 506.2C32.5 512.3 22.49 513.7 13.97 509.8C5.456 505.9 0 497.4 0 488V24C0 14.63 5.456 6.112 13.97 2.196V2.196zM96 144C87.16 144 80 151.2 80 160C80 168.8 87.16 176 96 176H288C296.8 176 304 168.8 304 160C304 151.2 296.8 144 288 144H96zM96 368H288C296.8 368 304 360.8 304 352C304 343.2 296.8 336 288 336H96C87.16 336 80 343.2 80 352C80 360.8 87.16 368 96 368zM96 240C87.16 240 80 247.2 80 256C80 264.8 87.16 272 96 272H288C296.8 272 304 264.8 304 256C304 247.2 296.8 240 288 240H96z"/></svg>`;
+
+            const PERSON_RUNNING_SVG = `<svg width="1em" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Pro 6.1.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2022 Fonticons, Inc. --><path d="M400 224h-44l-26.12-53.25c-12.5-25.5-35.38-44.25-61.75-51L197 98.63C189.5 96.84 181.1 95.97 174.5 95.97c-20.88 0-41.33 6.81-58.26 19.78L76.5 146.3C68.31 152.5 64.01 162 64.01 171.6c0 17.11 13.67 32.02 32.02 32.02c6.808 0 13.67-2.158 19.47-6.616l39.63-30.38c5.92-4.488 13.01-6.787 19.53-6.787c2.017 0 3.981 .2196 5.841 .6623l14.62 4.25l-37.5 87.5C154.1 260.3 152.5 268.8 152.5 277.2c0 22.09 11.49 43.52 31.51 55.29l85 50.13l-27.5 87.75c-.9875 3.174-1.458 6.388-1.458 9.55c0 13.65 8.757 26.31 22.46 30.58C265.6 511.5 268.9 512 272 512c13.62 0 26.25-8.75 30.5-22.5l31.75-101c1.211-4.278 1.796-8.625 1.796-12.93c0-16.57-8.661-32.51-23.55-41.44l-61.13-36.12l31.25-78.38l20.25 41.5C310.9 277.4 327.9 288 345.1 288H400c17.62 0 32-14.38 32-32C432 238.3 417.6 224 400 224zM288 96c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48S261.5 96 288 96zM129.8 317.5L114.9 352H48c-17.62 0-32 14.38-32 32s14.38 32 32 32h77.5c19.25 0 36.5-11.5 44-29.12l8.875-20.5l-10.75-6.25C150.4 349.9 137.6 334.8 129.8 317.5z"/></svg>`;
+
+            const ROBBERY_SVG = `<svg width="1em" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Pro 6.1.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2022 Fonticons, Inc. --><path d="M496.1 24.24C501.2 7.093 518.6-3.331 535.8 .9552C552.9 5.242 563.3 22.62 559 39.76L550.3 74.63C539.3 118.6 510.1 154.2 472 174.3V480C472 497.7 457.7 512 440 512C422.3 512 408 497.7 408 480V352H392V480C392 497.7 377.7 512 360 512C342.3 512 328 497.7 328 480V174.3C289.9 154.2 260.7 118.6 249.7 74.63L240.1 39.76C236.7 22.62 247.1 5.242 264.2 .9552C281.4-3.331 298.8 7.093 303 24.24L311.8 59.1C321.9 99.59 358.3 127.1 400 127.1C441.7 127.1 478.1 99.59 488.2 59.1L496.1 24.24zM352 47.1C352 21.49 373.5-.0006 400-.0006C426.5-.0006 448 21.49 448 47.1C448 74.51 426.5 95.1 400 95.1C373.5 95.1 352 74.51 352 47.1V47.1zM32.01 48C32.01 21.49 53.5 0 80.01 0C106.5 0 128 21.49 128 48C128 74.51 106.5 96 80.01 96C53.5 96 32.01 74.51 32.01 48V48zM104.7 128C132.1 128 157.6 142 172.2 165.1L209.6 224H240C257.7 224 272 238.3 272 256C272 273.7 257.7 288 240 288H192C181 288 170.9 282.4 164.1 273.1L152 252.7V480C152 497.7 137.7 512 120 512C102.3 512 88 497.7 88 480V352H72V480C72 497.7 57.68 512 40 512C22.33 512 8.005 497.7 8.005 480V288.6L8 287.1V191.1C8 156.7 36.65 127.1 72 127.1L104.7 128z"/></svg>`;
+
             const REGEX_UI_TIME = /([0-9]{1,2}):([0-9]{1,2})/g;
-            const MATCH_TIME_MINUTES = 45;
-
-
+            const MATCH_TIME_SECONDS = 45*60;
 
             function dropHandler(ev) {
                 // Prevent default behavior (Prevent file from being opened)
@@ -158,17 +164,6 @@
                             for (let playerNumber = 0; playerNumber < team.size; playerNumber++) {
                                 const playerName = getPlayerProperty(teamNumber, playerNumber, "blood_line_name");
 
-                                /*  <Attr name="MissionBagPlayer_1_0_tooltip_downedbyteammate" value=""/>
-                                    <Attr name="MissionBagPlayer_1_0_tooltipbountyextracted" value=""/>
-                                    <Attr name="MissionBagPlayer_1_0_tooltipbountypickedup" value=""/>
-                                    <Attr name="MissionBagPlayer_1_0_tooltipdownedbyme" value=""/>
-                                    <Attr name="MissionBagPlayer_1_0_tooltipdownedme" value=""/>
-                                    <Attr name="MissionBagPlayer_1_0_tooltipdownedteammate" value=""/>
-                                    <Attr name="MissionBagPlayer_1_0_tooltipkilledbyme" value=""/>
-                                    <Attr name="MissionBagPlayer_1_0_tooltipkilledbyteammate" value=""/>
-                                    <Attr name="MissionBagPlayer_1_0_tooltipkilledme" value=""/>
-                                    <Attr name="MissionBagPlayer_1_0_tooltipkilledteammate" value=""/>*/
-
                                 if (playerName !== null) {
                                     let player = {
                                         name: playerName,
@@ -194,7 +189,27 @@
                                         wasProximityToTeamMate: getPlayerProperty(teamNumber, playerNumber, "proximitytoteammate") === "true",
                                         wasSkillBased: getPlayerProperty(teamNumber, playerNumber, "skillbased") === "true",
                                         wasTeamExtraction: getPlayerProperty(teamNumber, playerNumber, "teamextraction") === "true",
+                                        tooltips: {}
                                     };
+
+                                    player.isMe = !player.isPartner && team.isMine;
+
+                                    for (const property of ["_downedbyteammate", "bountyextracted", "bountypickedup", "downedbyme", "downedme", "downedteammate", "killedbyme", "killedbyteammate", "killedme", "killedteammate"]) {
+                                        const rawTooltip = getPlayerProperty(teamNumber, playerNumber, `tooltip${property}`);
+                                        const regex = /[0-9]{1,2}:[0-9]{2}/g;
+                                        const found = rawTooltip.match(regex);
+
+                                        player.tooltips[property] = [];
+
+                                        if (found) {
+                                            const timeArray = found.map(timeStamp => {
+                                                const [minutes, seconds] = timeStamp.split(':').map(str => parseInt(str));
+                                                return minutes*60 + seconds;
+                                            });
+
+                                            player.tooltips[property] = timeArray;
+                                        }
+                                    }
 
                                     if (typeof players[playerName] === "undefined") {
                                         players[playerName] = player;
@@ -209,6 +224,74 @@
                 }
 
                 updateTable(teams, players);
+            }
+
+            function eventTypeIcon(eventType) {
+                switch(eventType) {
+                    case "_downedbyteammate":
+                    case "killedbyteammate":
+                    case "downedbyme":
+                    case "killedbyme":
+                        return SKULL_SVG;
+                    case "downedme":
+                    case "downedteammate":
+                    case "killedme":
+                    case "killedteammate":
+                        return ROBBERY_SVG;
+                    case "bountypickedup":
+                        return RECEIPT_SVG;
+                    case "bountyextracted":
+                        return PERSON_RUNNING_SVG;
+                }
+            }
+
+            function eventTypeTitle(eventType) {
+                switch(eventType) {
+                    case "_downedbyteammate":
+                    case "killedbyteammate":
+                        return "Killed By Teammate";
+                    case "downedbyme":
+                    case "killedbyme":
+                        return "Killed By Me";
+                    case "downedme":
+                    case "killedme":
+                        return "Killed Me";
+                    case "downedteammate":
+                    case "killedteammate":
+                        return "Killed Teammate";
+                    case "bountypickedup":
+                        return "Picked Up Bounty";
+                    case "bountyextracted":
+                        return "Extracted with Bounty";
+                }
+            }
+
+            function getTimeline(player) {
+                const events = [];
+
+                for (const eventType in player.tooltips) {
+                    if (eventType == "bountyextracted" && player.tooltips[eventType].length > 0) {
+                        events.push({
+                            time: player.tooltips[eventType].at(-1),
+                            event: eventType,
+                            icon: eventTypeIcon(eventType),
+                            title: eventTypeTitle(eventType)
+                        });
+                    }
+                    else {
+                        for (const timeStamp of player.tooltips[eventType]) {
+                            events.push({
+                                time: timeStamp,
+                                event: eventType,
+                                icon: eventTypeIcon(eventType),
+                                title: eventTypeTitle(eventType)
+                            });
+                        }
+                    }
+                }
+
+                return events
+                    .sort((a, b) => a.time > b.time);
             }
 
             function updateTable(teams, players) {
@@ -228,7 +311,7 @@
                     for (const playerName of team.players) {
                         const player = players[playerName];
 
-                        const isMe = !player.isPartner && team.isMine;
+                        const isMe = player.isMe;
 
                         const playerNameCell = `<th class="${isMe ? 'me' : ''}">${isMe ? PERSON_SVG : player.isPartner ? PEOPLE_SVG : ''}${playerName}</th>`;
 
@@ -249,7 +332,9 @@
                             .map(stat => `<td style="width: 12em; text-align: center;" class="${isMe ? 'me' : ''}">${stat === 0 ? '' : stat}</td>`)
                             .join('');
                         
-                        const playerTimelineCell = `<td></td>`;
+
+                        const eventCells = getTimeline(player).map(event => `<span title="${Math.floor(event.time/60)}:${String(event.time%60).padStart(2, '0')} ${event.title}" style="position: absolute; left: ${100*event.time/MATCH_TIME_SECONDS}%;">${event.icon}</span>`).join('');
+                        const playerTimelineCell = `<td style="position: relative;">${eventCells}</td>`;
 
                         let cells = playerNameCell + playerMMRCell + KDACells + playerTimelineCell;
                         if (!addedTeamInfo) {
@@ -277,7 +362,7 @@
                     <th>My Deaths</th>
                     <th>Team Kills</th>
                     <th>Team Deaths</th>
-                    <th></th>
+                    <th>Timeline</th>
                 </tr>
             </thead>
             <tbody id="tbody"></tbody>
