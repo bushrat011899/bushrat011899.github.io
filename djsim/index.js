@@ -70,7 +70,7 @@ function startJob(job) {
             worker.terminate();
             return;
         }
-        
+
         const result = e.data;
         
         const table_body = document.querySelector("table#output tbody");
@@ -94,7 +94,7 @@ function startJob(job) {
         row.append(y);
 
         const success = document.createElement("td");
-        success.textContent = result.adapt_successful;
+        success.textContent = result.after_adapt_log10_ber < result.baseline_log10_ber;
         row.append(success);
 
         const baseline = document.createElement("td");
