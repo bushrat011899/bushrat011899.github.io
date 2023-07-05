@@ -100,6 +100,8 @@ async function gameHash(teams) {
 async function storeGame(game) {
     const gameId = await gameHash(game);
 
+    console.log("Storing Game". gameId);
+
     const transaction = DB.transaction(["game", "team", "teamMember", "profile", "playerName", "playerMMR", "event"], "readwrite");
     const gamesStore = transaction.objectStore("game");
     const teamsStore = transaction.objectStore("team");
@@ -480,19 +482,19 @@ async function getFile() {
 
     attributes.document = parser.parseFromString(attributes.text, "application/xml");
 
-    await parseData();
+    await parseData(attributes.document);
 
     await updateTableOfGames();
     await updateTableOfPlayers();
 }
 
-async function parseData() {
-    const numTeamsEntry = attributes.document.querySelector(`Attr[name="MissionBagNumTeams"]`);
+async function parseData(doc) {
+    const numTeamsEntry = doc.querySelector(`Attr[name="MissionBagNumTeams"]`);
     const numTeams = Number.parseInt(numTeamsEntry.attributes.value.value);
 
     const teams = {};
 
-    const teamEntries = attributes.document.querySelectorAll(`Attr[name^="MissionBagTeam_"]`);
+    const teamEntries = doc.querySelectorAll(`Attr[name^="MissionBagTeam_"]`);
     for (const teamEntry of teamEntries) {
         const [_, team, entry] = teamEntry.attributes.name.value.split("_");
         const value = teamEntry.attributes.value.value;
@@ -507,7 +509,7 @@ async function parseData() {
         teams[team][entry] = value;
     }
 
-    const playerEntries = attributes.document.querySelectorAll(`Attr[name^="MissionBagPlayer_"]`);
+    const playerEntries = doc.querySelectorAll(`Attr[name^="MissionBagPlayer_"]`);
     for (const playerEntry of playerEntries) {
         const [_, team, player, ...rest] = playerEntry.attributes.name.value.split("_");
         const entry = rest.join("_");
@@ -520,6 +522,8 @@ async function parseData() {
         teams[team].members[player] ??= {};
         teams[team].members[player][entry] = value;
     }
+
+    console.log(teams);
 
     await storeGame(teams);
 }
