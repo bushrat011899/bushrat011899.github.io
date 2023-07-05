@@ -113,7 +113,7 @@ async function storeGame(game) {
 
     const stamp = Date.now();
 
-    gamesStore.add({
+    gamesStore.put({
         id: gameId,
         date: stamp
     });
@@ -121,7 +121,7 @@ async function storeGame(game) {
     for (const teamId in game) {
         const team = game[teamId];
 
-        teamsStore.add({
+        teamsStore.put({
             game: gameId,
             number: teamId,
             mmr: team.mmr,
@@ -132,25 +132,25 @@ async function storeGame(game) {
         for (const playerId in team.members) {
             const player = team.members[playerId];
 
-            teamMembersStore.add({
+            teamMembersStore.put({
                 game: gameId,
                 number: teamId,
                 profile: player.profileid,
                 date: stamp
             });
 
-            profilesStore.add({
+            profilesStore.put({
                 id: player.profileid,
                 date: stamp
             });
 
-            playerNamesStore.add({
+            playerNamesStore.put({
                 profile: player.profileid,
                 name: player.blood_line_name,
                 date: stamp
             });
 
-            playerMMRsStore.add({
+            playerMMRsStore.put({
                 game: gameId,
                 profile: player.profileid,
                 mmr: player.mmr,
@@ -169,7 +169,7 @@ async function storeGame(game) {
                 for (const [match, label, minutes, seconds] of matches) {
                     const clock = Number.parseInt(minutes) * 60 + Number.parseInt(seconds);
                     
-                    eventsStore.add({
+                    eventsStore.put({
                         game: gameId,
                         profile: player.profileid,
                         category: category.trim(),
