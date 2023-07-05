@@ -427,7 +427,7 @@ async function showPlayerDetails(playerId) {
 
     mmrChartArea.append(mmrChart);
 
-    const data = [...playerMMRs.map(entry => entry.mmr)];
+    const data = [...playerMMRs.map((entry, index) => ({ x: index, y: entry.mmr }))];
 
     new Chart(mmrChart, {
         type: 'line',
