@@ -181,6 +181,11 @@ async function storeGame(game) {
             }
         }
     }
+
+    await new Promise((resolve, reject) => {
+        transaction.oncomplete = (event) => { resolve(); };
+        transaction.onerror = (event) => { reject(event); }
+    });
 }
 
 async function updateTableOfGames() {
@@ -226,6 +231,11 @@ async function updateTableOfGames() {
             showGameDetails(game.id);
         });
     }
+
+    await new Promise((resolve, reject) => {
+        transaction.oncomplete = (event) => { resolve(); };
+        transaction.onerror = (event) => { reject(event); }
+    });
 }
 
 async function showGameDetails(gameId) {
@@ -294,6 +304,11 @@ async function showGameDetails(gameId) {
         MMREntry.textContent = playerMMR.mmr;
         row.append(MMREntry);
     }
+
+    await new Promise((resolve, reject) => {
+        transaction.oncomplete = (event) => { resolve(); };
+        transaction.onerror = (event) => { reject(event); }
+    });
 
     gameDetails.showModal();
 }
@@ -379,6 +394,11 @@ async function updateTableOfPlayers() {
             showPlayerDetails(profile.id);
         });
     }
+
+    await new Promise((resolve, reject) => {
+        transaction.oncomplete = (event) => { resolve(); };
+        transaction.onerror = (event) => { reject(event); }
+    });
 }
 
 async function showPlayerDetails(playerId) {
@@ -426,7 +446,10 @@ async function showPlayerDetails(playerId) {
         }
     });
 
-    console.log(mmrChart);
+    await new Promise((resolve, reject) => {
+        transaction.oncomplete = (event) => { resolve(); };
+        transaction.onerror = (event) => { reject(event); }
+    });
 
     gameDetails.showModal();
 }
