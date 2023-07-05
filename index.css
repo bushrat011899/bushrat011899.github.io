@@ -1,3 +1,7 @@
+[hidden] {
+    display: none !important;
+}
+
 body {
     margin: 0;
     padding: 0;
@@ -9,6 +13,22 @@ body {
 dialog#gameDetails,
 dialog#playerDetails {
     width: 90%;
+}
+
+button#fileButton {
+    background-color: #009879; /* Green */
+    border: black;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    width: 100%;
+}
+
+button#fileButton:hover, tbody tr {
+    cursor: pointer;
 }
 
 .styled-table {

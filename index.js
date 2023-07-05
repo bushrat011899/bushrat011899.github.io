@@ -383,10 +383,6 @@ async function showPlayerDetails(playerId) {
     const gameDetails = document.querySelector("dialog#playerDetails");
     const mmrChartArea = gameDetails.querySelector("div#chartArea");
 
-    while (mmrChartArea.firstChild) {
-        mmrChartArea.removeChild(mmrChartArea.lastChild);
-    }
-
     const transaction = DB.transaction(["playerMMR"], "readonly");
 
     const playerMMRsStore = transaction.objectStore("playerMMR");
@@ -402,6 +398,11 @@ async function showPlayerDetails(playerId) {
 
     const mmrChart = document.createElement("canvas");
     mmrChart.id = "mmrChart";
+
+    while (mmrChartArea.firstChild) {
+        mmrChartArea.removeChild(mmrChartArea.lastChild);
+    }
+
     mmrChartArea.append(mmrChart);
 
     new Chart(mmrChart, {
@@ -457,6 +458,8 @@ async function getHandle() {
     const [fileHandle] = await window.showOpenFilePicker(pickerOpts);
 
     attributes.handle = fileHandle;
+
+    document.querySelector("button#fileButton").toggleAttribute("hidden", true);
 }
 
 async function getFile() {
