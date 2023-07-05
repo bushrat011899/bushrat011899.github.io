@@ -417,7 +417,8 @@ async function showPlayerDetails(playerId) {
         options: {
             scales: {
                 y: {
-                    beginAtZero: true
+                    beginAtZero: true,
+                    suggestedMax: 5000
                 }
             }
         }
