@@ -15,6 +15,12 @@ dialog#playerDetails {
     width: 90%;
 }
 
+dialog#gameDetails ol[events] {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
 button#fileButton {
     background-color: #009879; /* Green */
     border: black;
