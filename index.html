@@ -56,12 +56,12 @@
         <table id="players" class="styled-table">
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>MMR</th>
-                    <th>Kills</th>
-                    <th>Deaths</th>
-                    <th>Assists</th>
-                    <th>Games</th>
+                    <th onclick="sortTable(this.parent.parent.parent, (x, y) => x.textContent.toLowerCase() > y.textContent.toLowerCase(), 0)">Name</th>
+                    <th onclick="sortTable(this.parent.parent.parent, (x, y) => Number.parseInt(x.textContent) > Number.parseInt(y.textContent), 1)">MMR</th>
+                    <th onclick="sortTable(this.parent.parent.parent, (x, y) => Number.parseInt(x.textContent) > Number.parseInt(y.textContent), 2)">Kills</th>
+                    <th onclick="sortTable(this.parent.parent.parent, (x, y) => Number.parseInt(x.textContent) > Number.parseInt(y.textContent), 3)">Deaths</th>
+                    <th onclick="sortTable(this.parent.parent.parent, (x, y) => Number.parseInt(x.textContent) > Number.parseInt(y.textContent), 4)">Assists</th>
+                    <th onclick="sortTable(this.parent.parent.parent, (x, y) => Number.parseInt(x.textContent) > Number.parseInt(y.textContent), 5)">Games</th>
                 </tr>
             </thead>
             <tbody></tbody>
