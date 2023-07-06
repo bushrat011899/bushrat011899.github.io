@@ -97,6 +97,42 @@ async function gameHash(teams) {
     return hashHex;
 }
 
+async function playerRivalry(id) {
+    const transaction = DB.transaction(["event"], "readonly");
+
+    const eventsStore = transaction.objectStore("event");
+
+    const stats = {
+        kills: 0,
+        deaths: 0,
+        assists: 0
+    };
+
+    const events = await new Promise((resolve, reject) => {
+        eventsStore.index("profile").getAll(id).onsuccess = (event) => {
+            const result = event.target.result;
+            resolve(result);
+        };
+    });
+
+    for (const event of events) {
+        if (event.category == "downedbyme" || event.category == "killedbyme") {
+            stats.kills += 1;
+        } else if (event.category == "downedme" || event.category == "killedme") {
+            stats.deaths += 1;
+        } else if (event.category == "downedbyteammate" || event.category == "killedbyteammate") {
+            stats.assists += 1;
+        }
+    }
+
+    await new Promise((resolve, reject) => {
+        transaction.oncomplete = (event) => { resolve(); };
+        transaction.onerror = (event) => { reject(event); }
+    });
+
+    return stats;
+}
+
 async function playerMMRStats(id) {
     const transaction = DB.transaction(["playerMMR"], "readonly");
 
@@ -595,6 +631,12 @@ async function showPlayerDetails(playerId) {
 
     gameDetails.querySelector("span[mmrAverage]").textContent = Math.floor(mmrStats.mean);
     gameDetails.querySelector("span[mmrStd]").textContent = Math.floor(mmrStats.std);
+
+    const rivalry = await playerRivalry(playerId);
+
+    gameDetails.querySelector("span[kills]").textContent = rivalry.kills;
+    gameDetails.querySelector("span[deaths]").textContent = rivalry.deaths;
+    gameDetails.querySelector("span[assists]").textContent = rivalry.assists;
 
     gameDetails.showModal();
 }
