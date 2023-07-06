@@ -93,7 +93,7 @@ async function gameHash(teams) {
     const hashHex = hashArray
         .map((b) => b.toString(16).padStart(2, "0"))
         .join("");
-    
+
     return hashHex;
 }
 
@@ -143,8 +143,12 @@ async function storeGame(game) {
 
     const alreadyAdded = await new Promise((resolve) => {
         const request = gamesStore.get(gameId);
-        request.onsuccess = () => resolve(true);
-        request.onerror = () => resolve(false);
+        request.onsuccess = (event) => {
+            resolve(event.target.result != null);
+        };
+        request.onerror = (event) => {
+            resolve(false);
+        };
     });
 
     if (alreadyAdded) return;
@@ -683,8 +687,6 @@ async function parseData(doc) {
         teams[team].members[player] ??= {};
         teams[team].members[player][entry] = value;
     }
-
-    console.log(teams);
 
     await storeGame(teams);
 }
