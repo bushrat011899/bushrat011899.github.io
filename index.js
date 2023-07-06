@@ -72,6 +72,15 @@ async function setupDB() {
     return db;
 }
 
+async function waitFor(dbOperation) {
+    return await new Promise((resolve, reject) => {
+        dbOperation().onsuccess = (event) => {
+            const result = event.target.result;
+            resolve(result);
+        };
+    });
+}
+
 async function gameHash(teams) {
     // Consider a game unique by its player composition and MMRs.
     let data = "";
@@ -107,13 +116,8 @@ async function playerRivalry(id) {
         deaths: 0,
         assists: 0
     };
-
-    const events = await new Promise((resolve, reject) => {
-        eventsStore.index("profile").getAll(id).onsuccess = (event) => {
-            const result = event.target.result;
-            resolve(result);
-        };
-    });
+    
+    const events = await waitFor(() => eventsStore.index("profile").getAll(id));
 
     for (const event of events) {
         if (event.category == "downedbyme" || event.category == "killedbyme") {
@@ -138,12 +142,7 @@ async function playerMMRStats(id) {
 
     const playerMMRsStore = transaction.objectStore("playerMMR");
 
-    const mmrs = await new Promise((resolve, reject) => {
-        playerMMRsStore.index("profile").getAll(id).onsuccess = (event) => {
-            const result = event.target.result;
-            resolve(result);
-        };
-    });
+    const mmrs = await waitFor(() => playerMMRsStore.index("profile").getAll(id));
 
     const count = mmrs.length;
     const sum1 = mmrs.reduce((s, entry) => s + Number.parseInt(entry.mmr), 0);
@@ -270,12 +269,7 @@ async function updateTableOfGames() {
     const gamesStore = transaction.objectStore("game");
     const teamMembersStore = transaction.objectStore("teamMember");
 
-    const games = await new Promise((resolve, reject) => {
-        gamesStore.index("date").getAll().onsuccess = (event) => {
-            const result = event.target.result;
-            resolve(result);
-        };
-    });
+    const games = await waitFor(() => gamesStore.index("date").getAll());
 
     const tableBody = document.querySelector("table#games > tbody");
 
@@ -292,12 +286,7 @@ async function updateTableOfGames() {
         dateEntry.textContent = new Date(game.date).toLocaleString();
         row.append(dateEntry);
 
-        const playerCount = await new Promise((resolve, reject) => {
-            teamMembersStore.index("game").count(game.id).onsuccess = (event) => {
-                const result = event.target.result;
-                resolve(result);
-            };
-        });
+        const playerCount = await waitFor(() => teamMembersStore.index("game").count(game.id));
 
         const playerCountEntry = document.createElement("td");
         playerCountEntry.textContent = playerCount;
@@ -330,21 +319,11 @@ async function showGameDetails(gameId) {
     const playerMMRsStore = transaction.objectStore("playerMMR");
     const eventsStore = transaction.objectStore("event");
 
-    const game = await new Promise((resolve, reject) => {
-        gamesStore.get(gameId).onsuccess = (event) => {
-            const result = event.target.result;
-            resolve(result);
-        };
-    });
+    const game = await waitFor(() => gamesStore.get(gameId));
 
     const gameDate = new Date(game.date);
 
-    const teamMembers = await new Promise((resolve, reject) => {
-        teamMembersStore.index("game").getAll(gameId).onsuccess = (event) => {
-            const result = event.target.result;
-            resolve(result);
-        };
-    });
+    const teamMembers = await waitFor(() => teamMembersStore.index("game").getAll(gameId));
 
     gameDetails.querySelector("em").textContent = gameDate.toLocaleString();
 
@@ -352,12 +331,7 @@ async function showGameDetails(gameId) {
     let spannedRows = {};
 
     for (const teamMember of teamMembers) {
-        const teamSize = await new Promise((resolve, reject) => {
-            teamMembersStore.index("game_number").count([gameId, teamMember.number]).onsuccess = (event) => {
-                const result = event.target.result;
-                resolve(result);
-            };
-        });
+        const teamSize = await waitFor(() => teamMembersStore.index("game_number").count([gameId, teamMember.number]));
 
         const row = document.createElement("tr");
         row.setAttribute("player", teamMember.profile);
@@ -371,12 +345,7 @@ async function showGameDetails(gameId) {
             spannedRows[teamMember.number] = true;
         }
 
-        const playerNames = await new Promise((resolve, reject) => {
-            playerNamesStore.index("profile").getAll(teamMember.profile).onsuccess = (event) => {
-                const result = event.target.result;
-                resolve(result);
-            };
-        });
+        const playerNames = await waitFor(() => playerNamesStore.index("profile").getAll(teamMember.profile));
 
         playerNames.sort((a, b) => b.date - a.date);
 
@@ -386,24 +355,14 @@ async function showGameDetails(gameId) {
         nameEntry.textContent = playerNameMapping[teamMember.profile];
         row.append(nameEntry);
 
-        const playerMMR = await new Promise((resolve, reject) => {
-            playerMMRsStore.get([gameId, teamMember.profile]).onsuccess = (event) => {
-                const result = event.target.result;
-                resolve(result);
-            };
-        });
+        const playerMMR = await waitFor(() => playerMMRsStore.get([gameId, teamMember.profile]));
 
         const MMREntry = document.createElement("td");
         MMREntry.textContent = playerMMR.mmr;
         row.append(MMREntry);
     }
 
-    const events = await new Promise((resolve, reject) => {
-        eventsStore.index("game").getAll(gameId).onsuccess = (event) => {
-            const result = event.target.result;
-            resolve(result);
-        };
-    });
+    const events = await waitFor(() => eventsStore.index("game").getAll(gameId));
 
     events.sort((a, b) => a.clock - b.clock);
 
@@ -483,12 +442,7 @@ async function updateTableOfPlayers() {
     const playerMMRsStore = transaction.objectStore("playerMMR");
     const teamMembersStore = transaction.objectStore("teamMember");
 
-    const profiles = await new Promise((resolve, reject) => {
-        profilesStore.getAll().onsuccess = (event) => {
-            const result = event.target.result;
-            resolve(result);
-        };
-    });
+    const profiles = await waitFor(() => profilesStore.getAll());
 
     const tableBody = document.querySelector("table#players > tbody");
 
@@ -500,12 +454,7 @@ async function updateTableOfPlayers() {
             return row;
         })();
 
-        const playerNames = await new Promise((resolve, reject) => {
-            playerNamesStore.index("profile").getAll(profile.id).onsuccess = (event) => {
-                const result = event.target.result;
-                resolve(result);
-            };
-        });
+        const playerNames = await waitFor(() => playerNamesStore.index("profile").getAll(profile.id));
 
         playerNames.sort((a, b) => b.date - a.date);
 
@@ -518,12 +467,7 @@ async function updateTableOfPlayers() {
         
         nameEntry.textContent = playerNames[0].name;
 
-        const playerMMRs = await new Promise((resolve, reject) => {
-            playerMMRsStore.index("profile").getAll(profile.id).onsuccess = (event) => {
-                const result = event.target.result;
-                resolve(result);
-            };
-        });
+        const playerMMRs = await waitFor(() => playerMMRsStore.index("profile").getAll(profile.id));
 
         playerMMRs.sort((a, b) => b.date - a.date);
 
@@ -536,12 +480,7 @@ async function updateTableOfPlayers() {
         
         MMREntry.textContent = playerMMRs[0].mmr;
 
-        const playedGames = await new Promise((resolve, reject) => {
-            teamMembersStore.index("profile").count(profile.id).onsuccess = (event) => {
-                const result = event.target.result;
-                resolve(result);
-            };
-        });
+        const playedGames = await waitFor(() => teamMembersStore.index("profile").count(profile.id));
 
         const killsEntry = row.querySelector(`td[kills]`) ?? (() => {
             const killsEntry = document.createElement("td");
@@ -603,24 +542,14 @@ async function showPlayerDetails(playerId) {
     const playerMMRsStore = transaction.objectStore("playerMMR");
     const playerNamesStore = transaction.objectStore("playerName");
 
-    const playerNames = await new Promise((resolve, reject) => {
-        playerNamesStore.index("profile").getAll(playerId).onsuccess = (event) => {
-            const result = event.target.result;
-            resolve(result);
-        };
-    });
+    const playerNames = await waitFor(() => playerNamesStore.index("profile").getAll(playerId));
 
     playerNames.sort((a, b) => b.date - a.date);
 
     gameDetails.querySelector("h2[name]").textContent = playerNames[0].name;
     gameDetails.querySelector("p[profile]").textContent = playerId;
 
-    const playerMMRs = await new Promise((resolve, reject) => {
-        playerMMRsStore.index("profile").getAll(playerId).onsuccess = (event) => {
-            const result = event.target.result;
-            resolve(result);
-        };
-    });
+    const playerMMRs = await waitFor(() => playerMMRsStore.index("profile").getAll(playerId));
 
     playerMMRs.sort((a, b) => b.date - a.date);
 
