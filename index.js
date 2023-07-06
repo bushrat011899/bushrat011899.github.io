@@ -625,7 +625,7 @@ function sortTable(headerElement, transform, column) {
             const x = rows[i].getElementsByTagName("td")[column];
             const y = rows[i + 1].getElementsByTagName("td")[column];
             // Check if the two rows should switch place:
-            if (table.ascending ? transform(x) > transform(y) : transform(x) < transform(y)) {
+            if (table.hasAttribute("ascending") ? transform(x) > transform(y) : transform(x) < transform(y)) {
                 // If so, mark as a switch and break the loop:
                 shouldSwitch = true;
                 break;
