@@ -53,15 +53,15 @@
         <h1>Players</h1>
         <p>Table of all players you've played against. Click on one to see details.</p>
 
-        <table id="players" class="styled-table">
+        <table id="players" class="styled-table" ascending>
             <thead>
                 <tr>
-                    <th onclick="sortTable(this.parentElement.parentElement.parentElement, (x, y) => x.textContent.toLowerCase() > y.textContent.toLowerCase(), 0)">Name</th>
-                    <th onclick="sortTable(this.parentElement.parentElement.parentElement, (x, y) => Number.parseInt(x.textContent) > Number.parseInt(y.textContent), 1)">MMR</th>
-                    <th onclick="sortTable(this.parentElement.parentElement.parentElement, (x, y) => Number.parseInt(x.textContent) > Number.parseInt(y.textContent), 2)">Kills</th>
-                    <th onclick="sortTable(this.parentElement.parentElement.parentElement, (x, y) => Number.parseInt(x.textContent) > Number.parseInt(y.textContent), 3)">Deaths</th>
-                    <th onclick="sortTable(this.parentElement.parentElement.parentElement, (x, y) => Number.parseInt(x.textContent) > Number.parseInt(y.textContent), 4)">Assists</th>
-                    <th onclick="sortTable(this.parentElement.parentElement.parentElement, (x, y) => Number.parseInt(x.textContent) > Number.parseInt(y.textContent), 5)">Games</th>
+                    <th onclick="sortTable(this, (x) => x.textContent.toLowerCase(), 0)">Name</th>
+                    <th onclick="sortTable(this, (x) => Number.parseInt(x.textContent), 1)">MMR</th>
+                    <th onclick="sortTable(this, (x) => Number.parseInt(x.textContent), 2)">Kills</th>
+                    <th onclick="sortTable(this, (x) => Number.parseInt(x.textContent), 3)">Deaths</th>
+                    <th onclick="sortTable(this, (x) => Number.parseInt(x.textContent), 4)">Assists</th>
+                    <th onclick="sortTable(this, (x) => Number.parseInt(x.textContent), 5)">Games</th>
                 </tr>
             </thead>
             <tbody></tbody>

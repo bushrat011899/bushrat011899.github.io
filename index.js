@@ -601,7 +601,9 @@ async function showPlayerDetails(playerId) {
     gameDetails.showModal();
 }
 
-function sortTable(table, compare, column) {
+function sortTable(headerElement, transform, column) {
+    const table = headerElement.parentElement.parentElement.parentElement;
+    table.toggleAttribute("ascending");
     let switching = true;
 
     /* Make a loop that will continue until
@@ -612,7 +614,7 @@ function sortTable(table, compare, column) {
         switching = false;
         let shouldSwitch = false;
         const rows = table.rows;
-        
+
         /* Loop through all table rows (except the
         first, which contains table headers): */
         for (i = 1; i < (rows.length - 1); i++) {
@@ -623,7 +625,7 @@ function sortTable(table, compare, column) {
             const x = rows[i].getElementsByTagName("td")[column];
             const y = rows[i + 1].getElementsByTagName("td")[column];
             // Check if the two rows should switch place:
-            if (compare(x, y)) {
+            if (table.ascending ? transform(x) > transform(y) : transform(x) < transform(y)) {
                 // If so, mark as a switch and break the loop:
                 shouldSwitch = true;
                 break;
