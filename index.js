@@ -551,7 +551,7 @@ async function showPlayerDetails(playerId) {
 
     const playerMMRs = await waitFor(() => playerMMRsStore.index("profile").getAll(playerId));
 
-    playerMMRs.sort((a, b) => b.date - a.date);
+    playerMMRs.sort((a, b) => a.date - b.date);
 
     const mmrChart = document.createElement("canvas");
     mmrChart.id = "mmrChart";
