@@ -83,7 +83,7 @@ async function gameHash(teams) {
         for (const playerId in team.members) {
             const player = team.members[playerId];
 
-            data += `(ID${player.profileid} AS ${player.blood} AT ${player.mmr})\n`;
+            data += `(ID${player.profileid} AS ${player.blood_line_name} AT ${player.mmr})\n`;
         }
     }
 
@@ -95,6 +95,36 @@ async function gameHash(teams) {
         .join("");
     
     return hashHex;
+}
+
+async function playerMMRStats(id) {
+    const transaction = DB.transaction(["playerMMR"], "readonly");
+
+    const playerMMRsStore = transaction.objectStore("playerMMR");
+
+    const mmrs = await new Promise((resolve, reject) => {
+        playerMMRsStore.index("profile").getAll(id).onsuccess = (event) => {
+            const result = event.target.result;
+            resolve(result);
+        };
+    });
+
+    const count = mmrs.length;
+    const sum1 = mmrs.reduce((s, entry) => s + Number.parseInt(entry.mmr), 0);
+    const sum2 = mmrs.reduce((s, entry) => s + Number.parseInt(entry.mmr) ** 2, 0);
+
+    const stats = {
+        mean: sum1 / (count > 0 ? count : 1),
+        std: (sum2 / (count > 0 ? count : 1) - (sum1 / (count > 0 ? count : 1)) ** 2) * count / (count > 1 ? count - 1 : 1),
+        count
+    };
+
+    await new Promise((resolve, reject) => {
+        transaction.oncomplete = (event) => { resolve(); };
+        transaction.onerror = (event) => { reject(event); }
+    });
+
+    return stats;
 }
 
 async function storeGame(game) {
@@ -556,6 +586,11 @@ async function showPlayerDetails(playerId) {
         transaction.oncomplete = (event) => { resolve(); };
         transaction.onerror = (event) => { reject(event); }
     });
+    
+    const mmrStats = await playerMMRStats(playerId);
+
+    gameDetails.querySelector("span[mmrAverage]").textContent = Math.floor(mmrStats.mean);
+    gameDetails.querySelector("span[mmrStd]").textContent = Math.floor(mmrStats.std);
 
     gameDetails.showModal();
 }
@@ -566,10 +601,7 @@ async function showPlayerDetails(playerId) {
 const watchInterval = 1000 * 5;
 
 const attributes = {
-    text: null,
     handle: null,
-    watcher: null,
-    document: null,
     lastModified: 0
 };
 
@@ -605,13 +637,13 @@ async function getFile() {
 
     attributes.lastModified = file.lastModified;
 
-    attributes.text = await file.text();
+    const text = await file.text();
 
     const parser = new DOMParser();
+    
+    const doc = parser.parseFromString(text, "application/xml");
 
-    attributes.document = parser.parseFromString(attributes.text, "application/xml");
-
-    await parseData(attributes.document);
+    await parseData(doc);
 
     await updateTableOfGames();
     await updateTableOfPlayers();
@@ -667,10 +699,6 @@ setupDB().then(async () => {
     await updateTableOfPlayers();
 });
 
-attributes.watcher = setInterval(() => {
+setInterval(() => {
     watchFile();
 }, watchInterval);
-
-addEventListener("focus", (event) => {
-    watchFile();
-});
