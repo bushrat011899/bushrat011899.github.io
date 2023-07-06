@@ -575,8 +575,8 @@ async function showPlayerDetails(playerId) {
         options: {
             scales: {
                 y: {
-                    beginAtZero: true,
-                    suggestedMax: 5000
+                    suggestedMin: 2500,
+                    suggestedMax: 3000
                 }
             }
         }
