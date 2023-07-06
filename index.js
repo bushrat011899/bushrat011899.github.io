@@ -602,19 +602,20 @@ async function showPlayerDetails(playerId) {
 }
 
 function sortTable(table, compare, column) {
-    let rows = table.rows;
     let switching = true;
-    let shouldSwitch = false;
 
     /* Make a loop that will continue until
     no switching has been done: */
     while (switching) {
         // Start by saying: no switching is done:
+        let i = 1;
         switching = false;
-        rows = table.rows;
+        let shouldSwitch = false;
+        const rows = table.rows;
+        
         /* Loop through all table rows (except the
         first, which contains table headers): */
-        for (let i = 1; i < (rows.length - 1); i++) {
+        for (i = 1; i < (rows.length - 1); i++) {
             // Start by saying there should be no switching:
             shouldSwitch = false;
             /* Get the two elements you want to compare,
@@ -628,6 +629,7 @@ function sortTable(table, compare, column) {
                 break;
             }
         }
+
         if (shouldSwitch) {
             /* If a switch has been marked, make the switch
             and mark that a switch has been done: */
