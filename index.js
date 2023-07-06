@@ -543,6 +543,27 @@ async function updateTableOfPlayers() {
             };
         });
 
+        const killsEntry = row.querySelector(`td[kills]`) ?? (() => {
+            const killsEntry = document.createElement("td");
+            killsEntry.toggleAttribute("kills", true);
+            row.append(killsEntry);
+            return killsEntry;
+        })();
+
+        const deathsEntry = row.querySelector(`td[deaths]`) ?? (() => {
+            const deathsEntry = document.createElement("td");
+            deathsEntry.toggleAttribute("deaths", true);
+            row.append(deathsEntry);
+            return deathsEntry;
+        })();
+
+        const assistsEntry = row.querySelector(`td[assists]`) ?? (() => {
+            const assistsEntry = document.createElement("td");
+            assistsEntry.toggleAttribute("assists", true);
+            row.append(assistsEntry);
+            return assistsEntry;
+        })();
+
         const playedGamesEntry = row.querySelector(`td[games]`) ?? (() => {
             const playedGamesEntry = document.createElement("td");
             playedGamesEntry.toggleAttribute("games", true);
@@ -561,6 +582,16 @@ async function updateTableOfPlayers() {
         transaction.oncomplete = (event) => { resolve(); };
         transaction.onerror = (event) => { reject(event); }
     });
+
+    for (const profile of profiles) {
+        const rivalry = await playerRivalry(profile.id);
+
+        const row = tableBody.querySelector(`tr[profile="${profile.id}"]`);
+    
+        row.querySelector("td[kills]").textContent = rivalry.kills;
+        row.querySelector("td[deaths]").textContent = rivalry.deaths;
+        row.querySelector("td[assists]").textContent = rivalry.assists;
+    }
 }
 
 async function showPlayerDetails(playerId) {
