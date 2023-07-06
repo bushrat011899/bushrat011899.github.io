@@ -7,7 +7,7 @@
     <body>
         <script src="/index.js"></script>
 
-        <button id="fileButton" onclick="getFile();">Open File</button>
+        <button clickable id="fileButton" onclick="getFile();">Open File</button>
 
         <h1>Games</h1>
         <p>Table of all previous games. Click on one to see details.</p>
@@ -56,12 +56,12 @@
         <table id="players" class="styled-table" ascending>
             <thead>
                 <tr>
-                    <th onclick="sortTable(this, (x) => x.textContent.toLowerCase(), 0)">Name</th>
-                    <th onclick="sortTable(this, (x) => Number.parseInt(x.textContent), 1)">MMR</th>
-                    <th onclick="sortTable(this, (x) => Number.parseInt(x.textContent), 2)">Kills</th>
-                    <th onclick="sortTable(this, (x) => Number.parseInt(x.textContent), 3)">Deaths</th>
-                    <th onclick="sortTable(this, (x) => Number.parseInt(x.textContent), 4)">Assists</th>
-                    <th onclick="sortTable(this, (x) => Number.parseInt(x.textContent), 5)">Games</th>
+                    <th clickable onclick="sortTable(this, (x) => x.textContent.toLowerCase(), 0)">Name</th>
+                    <th clickable onclick="sortTable(this, (x) => Number.parseInt(x.textContent), 1)">MMR</th>
+                    <th clickable onclick="sortTable(this, (x) => Number.parseInt(x.textContent), 2)">Kills</th>
+                    <th clickable onclick="sortTable(this, (x) => Number.parseInt(x.textContent), 3)">Deaths</th>
+                    <th clickable onclick="sortTable(this, (x) => Number.parseInt(x.textContent), 4)">Assists</th>
+                    <th clickable onclick="sortTable(this, (x) => Number.parseInt(x.textContent), 5)">Games</th>
                 </tr>
             </thead>
             <tbody></tbody>

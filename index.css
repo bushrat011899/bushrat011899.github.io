@@ -2,6 +2,10 @@
     display: none !important;
 }
 
+[clickable] {
+    cursor: pointer;
+}
+
 body {
     margin: 0;
     padding: 0;
@@ -31,10 +35,6 @@ button#fileButton {
     display: inline-block;
     font-size: 16px;
     width: 100%;
-}
-
-button#fileButton:hover, tbody tr {
-    cursor: pointer;
 }
 
 .styled-table {

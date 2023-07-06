@@ -292,6 +292,8 @@ async function updateTableOfGames() {
         playerCountEntry.textContent = playerCount;
         row.append(playerCountEntry);
 
+        row.toggleAttribute("clickable", true);
+
         row.addEventListener("click", () => {
             showGameDetails(game.id);
         });
@@ -511,6 +513,8 @@ async function updateTableOfPlayers() {
         })();
         
         playedGamesEntry.textContent = playedGames;
+
+        row.toggleAttribute("clickable", true);
 
         row.addEventListener("click", () => {
             showPlayerDetails(profile.id);
