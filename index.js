@@ -602,7 +602,7 @@ async function showPlayerDetails(playerId) {
 }
 
 function sortTable(table, compare, column) {
-    const rows = table.rows;
+    let rows = table.rows;
     let switching = true;
     let shouldSwitch = false;
 
