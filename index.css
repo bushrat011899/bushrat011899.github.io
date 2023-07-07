@@ -1,9 +1,30 @@
+:root {
+    --colour-primary: #009879;
+    --colour-secondary: #5b0098;
+}
+
 [hidden] {
     display: none !important;
 }
 
 [clickable] {
+    position: relative;
     cursor: pointer;
+}
+
+[clickable]:after {
+    position: absolute;
+    content: '';
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--colour-secondary);
+    opacity: 0;
+}
+
+[clickable]:hover:after {
+    opacity: 0.3;
 }
 
 body {
@@ -12,6 +33,50 @@ body {
     width: 100%;
     height: 100%;
     font-family: Arial, Helvetica, sans-serif;
+}
+
+header {
+    background-color: var(--colour-primary);
+    width: 100%;
+    height: 100px;
+    vertical-align: middle;
+    display: inline-block;
+}
+
+header * {
+    margin-top: 0;
+    margin-bottom: 0;
+    margin-left: 1em;
+    margin-right: 1em;
+    line-height: 100px;
+}
+
+table#gamePlayers tbody tr[own] {
+    color: var(--colour-primary);
+}
+
+table#games,
+table#players {
+    position: relative;
+    display: inline-block;
+    min-height: 100px;
+    max-height: 30%;
+    overflow-y: scroll;
+}
+
+table#games thead tr,
+table#players thead tr {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+div#kda {
+    display: flex;
+    justify-content: space-evenly;
+    text-align: center;
+    font-size: large;
+    font-weight: bold;
 }
 
 dialog#gameDetails,
@@ -26,7 +91,7 @@ dialog#gameDetails ol[events] {
 }
 
 button#fileButton {
-    background-color: #009879; /* Green */
+    background-color: var(--colour-primary);
     border: black;
     color: white;
     padding: 15px 32px;
@@ -47,10 +112,11 @@ button#fileButton {
     width: 100%;
     white-space: nowrap;
     text-align: center;
+    border: 2px solid var(--colour-primary);
 }
 
 .styled-table thead tr {
-    background-color: #009879;
+    background-color: var(--colour-primary);
     color: #ffffff;
     text-align: center;
 }
@@ -64,20 +130,16 @@ button#fileButton {
     border-bottom: 1px solid #dddddd;
 }
 
-.styled-table tbody tr:last-of-type {
-    border-bottom: 2px solid #009879;
-}
-
 .styled-table tbody tr.myTeam {
     font-weight: bold;
-    color: #009879;
-    fill: #009879;
+    color: var(--colour-primary);
+    fill: var(--colour-primary);
 }
 
 .styled-table tbody tr.myTeam th.me {
     font-weight: bold;
-    color: #5b0098;
-    fill: #5b0098;
+    color: var(--colour-secondary);
+    fill: var(--colour-secondary);
 }
 
 .styled-table td:last-child {
@@ -89,11 +151,11 @@ td.timeline-cell {
 }
 
 .me {
-    fill: #5b0098;
+    fill: var(--colour-secondary);
 }
 
 .myTeam {
-    fill: #009879;
+    fill: var(--colour-primary);
 }
 
 #title-container {

@@ -114,7 +114,8 @@ async function playerRivalry(id) {
     const stats = {
         kills: 0,
         deaths: 0,
-        assists: 0
+        assists: 0,
+        collateral: 0
     };
     
     const events = await waitFor(() => eventsStore.index("profile").getAll(id));
@@ -126,6 +127,8 @@ async function playerRivalry(id) {
             stats.deaths += 1;
         } else if (event.category == "downedbyteammate" || event.category == "killedbyteammate") {
             stats.assists += 1;
+        } else if (event.category == "downedteammate" || event.category == "killedteammate") {
+            stats.collateral += 1;
         }
     }
 
@@ -313,13 +316,14 @@ async function showGameDetails(gameId) {
         tableBody.removeChild(tableBody.lastChild);
     }
 
-    const transaction = DB.transaction(["game", "teamMember", "playerName", "playerMMR", "event"], "readonly");
+    const transaction = DB.transaction(["game", "teamMember", "playerName", "playerMMR", "event", "team"], "readonly");
 
     const gamesStore = transaction.objectStore("game");
     const teamMembersStore = transaction.objectStore("teamMember");
     const playerNamesStore = transaction.objectStore("playerName");
     const playerMMRsStore = transaction.objectStore("playerMMR");
     const eventsStore = transaction.objectStore("event");
+    const teamsStore = transaction.objectStore("team");
 
     const game = await waitFor(() => gamesStore.get(gameId));
 
@@ -334,9 +338,11 @@ async function showGameDetails(gameId) {
 
     for (const teamMember of teamMembers) {
         const teamSize = await waitFor(() => teamMembersStore.index("game_number").count([gameId, teamMember.number]));
+        const team = await waitFor(() => teamsStore.get([gameId, teamMember.number]));
 
         const row = document.createElement("tr");
         row.setAttribute("player", teamMember.profile);
+        row.toggleAttribute("own", team?.own ?? false);
         tableBody.append(row);
 
         if (!spannedRows[teamMember.number]) {
@@ -362,6 +368,12 @@ async function showGameDetails(gameId) {
         const MMREntry = document.createElement("td");
         MMREntry.textContent = playerMMR.mmr;
         row.append(MMREntry);
+
+        row.toggleAttribute("clickable", true);
+
+        row.addEventListener("click", () => {
+            showPlayerDetails(teamMember.profile);
+        });
     }
 
     const events = await waitFor(() => eventsStore.index("game").getAll(gameId));
@@ -550,8 +562,12 @@ async function showPlayerDetails(playerId) {
 
     playerNames.sort((a, b) => b.date - a.date);
 
-    gameDetails.querySelector("h2[name]").textContent = playerNames[0].name;
-    gameDetails.querySelector("p[profile]").textContent = playerId;
+    const playerNameElement = gameDetails.querySelector("a[name]");
+    playerNameElement.textContent = playerNames[0].name;
+    playerNameElement.href = `https://www.steamidfinder.com/lookup/${playerNames[0].name}/`;
+    playerNameElement.target = "_blank";
+
+    gameDetails.querySelector("span[profile]").textContent = playerId;
 
     const playerMMRs = await waitFor(() => playerMMRsStore.index("profile").getAll(playerId));
 
@@ -601,13 +617,20 @@ async function showPlayerDetails(playerId) {
     gameDetails.querySelector("span[kills]").textContent = rivalry.kills;
     gameDetails.querySelector("span[deaths]").textContent = rivalry.deaths;
     gameDetails.querySelector("span[assists]").textContent = rivalry.assists;
+    gameDetails.querySelector("span[collateral]").textContent = rivalry.collateral;
 
     gameDetails.showModal();
 }
 
-function sortTable(headerElement, transform, column) {
-    const table = headerElement.parentElement.parentElement.parentElement;
+function sortTable(headerElement, transform) {
+    const headerRow = headerElement.parentElement;
+    const tableHeader = headerRow.parentElement;
+    const table = tableHeader.parentElement;
+
+    const column = Array.from(headerRow.children).indexOf(headerElement);
+
     table.toggleAttribute("ascending");
+
     let switching = true;
 
     /* Make a loop that will continue until
@@ -667,12 +690,21 @@ async function getHandle() {
         excludeAcceptAllOption: true,
         multiple: false,
     };
+
+    try {
+
+        const [fileHandle] = await window.showOpenFilePicker(pickerOpts);
     
-    const [fileHandle] = await window.showOpenFilePicker(pickerOpts);
+        attributes.handle = fileHandle;
+    
+        document.querySelector("button#fileButton").toggleAttribute("hidden", true);
+    } catch(e) {
+        console.error(e);
+        alert(
+`You cannot open this file. If your 'attributes.xml' is in a system folder (e.g., 'Program Files (x86)'), then you need to create a directory junction to allow your browser to open that file.
 
-    attributes.handle = fileHandle;
-
-    document.querySelector("button#fileButton").toggleAttribute("hidden", true);
+Alternatively, you can copy & paste your 'attributes.xml' into a different folder (e.g., 'Documents') to read the data once.`)
+    }
 }
 
 async function getFile() {

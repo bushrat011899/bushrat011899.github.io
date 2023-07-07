@@ -7,9 +7,15 @@
     <body>
         <script src="/index.js"></script>
 
-        <button clickable id="fileButton" onclick="getFile();">Open File</button>
+        <header>
+            <h1 style="float: left;">Hunt: ShowStats</h1>
+            <a style="float: right;" href="https://github.com/bushrat011899/bushrat011899.github.io" target="_blank">GitHub</a>
+            <a style="float: right;" href="https://github.com/bushrat011899/bushrat011899.github.io/blob/main/README.md" target="_blank">Details</a>
+        </header>
 
-        <h1>Games</h1>
+        <button clickable id="fileButton" onclick="getFile();">Watch File</button>
+
+        <h2>Games</h2>
         <p>Table of all previous games. Click on one to see details.</p>
 
         <table id="games" class="styled-table">
@@ -50,18 +56,18 @@
             </form>
         </dialog>
 
-        <h1>Players</h1>
+        <h2>Players</h2>
         <p>Table of all players you've played against. Click on one to see details.</p>
 
         <table id="players" class="styled-table" ascending>
             <thead>
                 <tr>
-                    <th clickable onclick="sortTable(this, (x) => x.textContent.toLowerCase(), 0)">Name</th>
-                    <th clickable onclick="sortTable(this, (x) => Number.parseInt(x.textContent), 1)">MMR</th>
-                    <th clickable onclick="sortTable(this, (x) => Number.parseInt(x.textContent), 2)">Kills</th>
-                    <th clickable onclick="sortTable(this, (x) => Number.parseInt(x.textContent), 3)">Deaths</th>
-                    <th clickable onclick="sortTable(this, (x) => Number.parseInt(x.textContent), 4)">Assists</th>
-                    <th clickable onclick="sortTable(this, (x) => Number.parseInt(x.textContent), 5)">Games</th>
+                    <th clickable onclick="sortTable(this, (x) => x.textContent.toLowerCase())">Name</th>
+                    <th clickable onclick="sortTable(this, (x) => Number.parseInt(x.textContent))">MMR</th>
+                    <th clickable onclick="sortTable(this, (x) => Number.parseInt(x.textContent))">Kills</th>
+                    <th clickable onclick="sortTable(this, (x) => Number.parseInt(x.textContent))">Deaths</th>
+                    <th clickable onclick="sortTable(this, (x) => Number.parseInt(x.textContent))">Assists</th>
+                    <th clickable onclick="sortTable(this, (x) => Number.parseInt(x.textContent))">Games</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -69,10 +75,26 @@
 
         <dialog id="playerDetails">
             <form>
-                <h1>Player Details</h1>
-                <h2 name>Player Name</h2>
-                <p profile>123456789</p>
-                <p><b>KDA</b> <span kills>0</span> : <span deaths>0</span> : <span assists>0</span></p>
+                <h1><a name>Player Name</a> (<span profile>123456789</span>)</h1>
+
+                <div id="kda">
+                    <div>
+                        <p>Your Kills</p>
+                        <span kills>0</span>
+                    </div>
+                    <div>
+                        <p>Your Deaths</p>
+                        <span deaths>0</span>
+                    </div>
+                    <div>
+                        <p>Team Kills</p>
+                        <span assists>0</span>
+                    </div>
+                    <div>
+                        <p>Team deaths</p>
+                        <span collateral>0</span>
+                    </div>
+                </div>
 
                 <h2>MMR</h2>
                 <p><span mmrAverage>2000</span> +- <span mmrStd>2000</span></p>

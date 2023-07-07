@@ -5,11 +5,11 @@
   "main": "index.html",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "server": "node server.js"
+    "server": "node server.js",
+    "openssl": "openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout server.key -out server.crt"
   },
   "author": "Zac Harrold",
   "license": "GNUv3",
   "dependencies": {
-    "express": "^4.18.2"
   }
 }
