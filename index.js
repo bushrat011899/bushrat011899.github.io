@@ -358,9 +358,9 @@ async function updateTableOfGames() {
         tableBody.append(row);
 
         const dateEntry = document.createElement("td");
+        dateEntry.sortProperty = game.date;
         const dateTimeEntry = document.createElement("time");
         dateTimeEntry.textContent = new Date(game.date).toLocaleString();
-        dateTimeEntry.sortProperty = game.date;
         dateTimeEntry.setAttribute("datetime", game.date)
         dateEntry.append(dateTimeEntry);
         row.append(dateEntry);
