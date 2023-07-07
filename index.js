@@ -72,6 +72,78 @@ async function setupDB() {
     return db;
 }
 
+async function importDB() {
+    const stores = DB.objectStoreNames;
+
+    const fileInput = document.querySelector("footer input#import");
+
+    fileInput.click();
+
+    let interval;
+    await new Promise((resolve) => {
+        interval = setInterval(() => {
+            if (fileInput.files[0]) resolve()
+        }, 100);
+    });
+    clearInterval(interval);
+
+    const textDump = await fileInput.files[0].text();
+
+    const dump = JSON.parse(textDump);
+    
+    const transaction = DB.transaction(stores, "readwrite");
+
+    for (const storeName in dump) {
+        const store = transaction.objectStore(storeName);
+
+        for (const entry of dump[storeName]) await waitFor(() => store.put(entry));
+    }
+
+    await new Promise((resolve, reject) => {
+        transaction.oncomplete = (event) => { resolve(); };
+        transaction.onerror = (event) => { reject(event); }
+    });
+
+    await updateUI();
+}
+
+async function exportDB() {
+    const dump = {};
+
+    const stores = DB.objectStoreNames;
+    
+    const transaction = DB.transaction(stores, "readonly");
+
+    for (const storeName of stores) {
+        const store = transaction.objectStore(storeName);
+
+        dump[storeName] = await waitFor(() => store.getAll());
+    }
+
+    await new Promise((resolve, reject) => {
+        transaction.oncomplete = (event) => { resolve(); };
+        transaction.onerror = (event) => { reject(event); }
+    });
+
+    const textDump = JSON.stringify(dump, null, 2);
+
+    const file = new File([textDump], "export.json", {
+        type: "application/json",
+    });
+
+    const url = URL.createObjectURL(file);
+
+    const downloadButton = document.createElement("a");
+    downloadButton.href = url;
+    downloadButton.setAttribute("download", file.name);
+
+    setTimeout(() => {
+        downloadButton.remove();
+    }, 10000);
+
+    downloadButton.click();
+}
+
 async function waitFor(dbOperation) {
     return await new Promise((resolve, reject) => {
         dbOperation().onsuccess = (event) => {
@@ -744,9 +816,7 @@ async function getFile() {
 
     await parseData(doc);
 
-    await updateStorageEstimate();
-    await updateTableOfGames();
-    await updateTableOfPlayers();
+    await updateUI();
 }
 
 async function parseData(doc) {
@@ -787,16 +857,18 @@ async function parseData(doc) {
     await storeGame(teams);
 }
 
+async function updateUI() {
+    await updateStorageEstimate();
+    await updateTableOfGames();
+    await updateTableOfPlayers();
+}
+
 async function watchFile() {
     if (!attributes.handle) return;
     await getFile();
 }
 
-setupDB().then(async () => {
-    await updateStorageEstimate();
-    await updateTableOfGames();
-    await updateTableOfPlayers();
-});
+setupDB().then(async () => await updateUI());
 
 setInterval(() => {
     watchFile();
