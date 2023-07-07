@@ -286,7 +286,10 @@ async function updateTableOfGames() {
         tableBody.append(row);
 
         const dateEntry = document.createElement("td");
-        dateEntry.textContent = new Date(game.date).toLocaleString();
+        const dateTimeEntry = document.createElement("time");
+        dateTimeEntry.textContent = new Date(game.date).toLocaleString();
+        dateTimeEntry.setAttribute("datetime", game.date)
+        dateEntry.append(dateTimeEntry);
         row.append(dateEntry);
 
         const playerCount = await waitFor(() => teamMembersStore.index("game").count(game.id));

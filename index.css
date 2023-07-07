@@ -1,8 +1,3 @@
-:root {
-    --colour-primary: #009879;
-    --colour-secondary: #5b0098;
-}
-
 [hidden] {
     display: none !important;
 }
@@ -53,6 +48,7 @@ header * {
 
 table#gamePlayers tbody tr[own] {
     color: var(--colour-primary);
+    font-weight: bold;
 }
 
 table#games,
