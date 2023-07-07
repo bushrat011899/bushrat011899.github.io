@@ -671,6 +671,21 @@ function sortTable(headerElement, transform) {
     }
 }
 
+async function updateStorageEstimate() {
+    function bytesToMegaBytes(xB) {
+        return xB / 1024 / 1024;
+    }
+
+    const quota = await navigator.storage.estimate();
+
+    const footer = document.querySelector("footer");
+    const usedElement = footer.querySelector("span[storage-used]");
+    const totalElement = footer.querySelector("span[storage-quota]");
+
+    usedElement.textContent = bytesToMegaBytes(quota.usage ?? 0).toFixed(2);
+    totalElement.textContent = bytesToMegaBytes(quota.quota ?? 0).toFixed(2);
+}
+
 
 
 const watchInterval = 1000 * 5;
@@ -729,6 +744,7 @@ async function getFile() {
 
     await parseData(doc);
 
+    await updateStorageEstimate();
     await updateTableOfGames();
     await updateTableOfPlayers();
 }
@@ -777,6 +793,7 @@ async function watchFile() {
 }
 
 setupDB().then(async () => {
+    await updateStorageEstimate();
     await updateTableOfGames();
     await updateTableOfPlayers();
 });
