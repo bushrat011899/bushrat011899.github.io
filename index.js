@@ -673,10 +673,9 @@ async function showPlayerDetails(playerId) {
     new Chart(mmrChart, {
         type: 'line',
         data: {
-            labels: playerMMRs.map(entry => new Date(entry.date).toLocaleString()),
             datasets: [{
-                label: 'MMR',
-                data: playerMMRs.map(entry => entry.mmr),
+                label: playerNames[0].name,
+                data: [...playerMMRs.map(entry => ({ x: entry.date, y: entry.mmr }))],
                 borderWidth: 1
             }]
         },
@@ -685,6 +684,13 @@ async function showPlayerDetails(playerId) {
                 y: {
                     suggestedMin: 2500,
                     suggestedMax: 3000
+                },
+                x: {
+                    type: 'linear',
+                    position: 'bottom',
+                    ticks: {
+                        callback: (value, index, ticks) => new Date(value).toLocaleString()
+                    }
                 }
             }
         }
