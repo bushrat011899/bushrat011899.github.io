@@ -223,9 +223,14 @@ async function playerMMRStats(id) {
     const sum1 = mmrs.reduce((s, entry) => s + Number.parseInt(entry.mmr), 0);
     const sum2 = mmrs.reduce((s, entry) => s + Number.parseInt(entry.mmr) ** 2, 0);
 
+    const countS1 = count > 0 ? count : 1;
+    const countS2 = count > 1 ? count - 1 : 1;
+    const mean = sum1 / countS1;
+    const variance = Math.sqrt((sum2 / countS1 - mean ** 2) * count / countS2);
+
     const stats = {
-        mean: sum1 / (count > 0 ? count : 1),
-        std: (sum2 / (count > 0 ? count : 1) - (sum1 / (count > 0 ? count : 1)) ** 2) * count / (count > 1 ? count - 1 : 1),
+        mean,
+        std: Math.sqrt(variance),
         count
     };
 
@@ -675,7 +680,10 @@ async function showPlayerDetails(playerId) {
         data: {
             datasets: [{
                 label: playerNames[0].name,
-                data: [...playerMMRs.map(entry => ({ x: entry.date, y: entry.mmr }))],
+                data: [...playerMMRs.map(entry => ({
+                    x: entry.date,
+                    y: entry.mmr
+                }))],
                 borderWidth: 1
             }]
         },
@@ -689,7 +697,7 @@ async function showPlayerDetails(playerId) {
                     type: 'linear',
                     position: 'bottom',
                     ticks: {
-                        callback: (value, index, ticks) => new Date(value).toLocaleString()
+                        callback: (value) => new Date(value).toLocaleString()
                     }
                 }
             }
@@ -872,9 +880,11 @@ async function parseData(doc) {
 }
 
 async function updateUI() {
-    await updateStorageEstimate();
-    await updateTableOfGames();
-    await updateTableOfPlayers();
+    await Promise.all([
+        updateStorageEstimate(),
+        updateTableOfGames(),
+        updateTableOfPlayers()
+    ]);
 }
 
 async function watchFile() {
@@ -882,7 +892,7 @@ async function watchFile() {
     await getFile();
 }
 
-setupDB().then(async () => await updateUI());
+setupDB().then(updateUI);
 
 setInterval(() => {
     watchFile();
