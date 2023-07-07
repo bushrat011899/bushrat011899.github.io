@@ -99,7 +99,7 @@ table#players {
     position: relative;
     display: inline-block;
     min-height: 100px;
-    max-height: 30%;
+    max-height: 25%;
     overflow-y: scroll;
 }
 

@@ -360,6 +360,7 @@ async function updateTableOfGames() {
         const dateEntry = document.createElement("td");
         const dateTimeEntry = document.createElement("time");
         dateTimeEntry.textContent = new Date(game.date).toLocaleString();
+        dateTimeEntry.sortProperty = game.date;
         dateTimeEntry.setAttribute("datetime", game.date)
         dateEntry.append(dateTimeEntry);
         row.append(dateEntry);
@@ -368,6 +369,7 @@ async function updateTableOfGames() {
 
         const playerCountEntry = document.createElement("td");
         playerCountEntry.textContent = playerCount;
+        playerCountEntry.sortProperty = Number.parseInt(playerCount);
         row.append(playerCountEntry);
 
         row.toggleAttribute("clickable", true);
@@ -555,6 +557,7 @@ async function updateTableOfPlayers() {
         })();
         
         nameEntry.textContent = playerNames[0].name;
+        nameEntry.sortProperty = playerNames[0].name.toLowerCase();
 
         const playerMMRs = await waitFor(() => playerMMRsStore.index("profile").getAll(profile.id));
 
@@ -568,6 +571,7 @@ async function updateTableOfPlayers() {
         })();
         
         MMREntry.textContent = playerMMRs[0].mmr;
+        MMREntry.sortProperty = Number.parseInt(playerMMRs[0].mmr);
 
         const playedGames = await waitFor(() => teamMembersStore.index("profile").count(profile.id));
 
@@ -600,6 +604,7 @@ async function updateTableOfPlayers() {
         })();
         
         playedGamesEntry.textContent = playedGames;
+        playedGamesEntry.sortProperty = playedGames;
 
         row.toggleAttribute("clickable", true);
 
@@ -618,9 +623,17 @@ async function updateTableOfPlayers() {
 
         const row = tableBody.querySelector(`tr[profile="${profile.id}"]`);
     
-        row.querySelector("td[kills]").textContent = rivalry.kills;
-        row.querySelector("td[deaths]").textContent = rivalry.deaths;
-        row.querySelector("td[assists]").textContent = rivalry.assists;
+        const killsEntry = row.querySelector("td[kills]");
+        killsEntry.textContent = rivalry.kills;
+        killsEntry.sortProperty = rivalry.kills;
+
+        const deathsEntry = row.querySelector("td[deaths]");
+        deathsEntry.textContent = rivalry.deaths;
+        deathsEntry.sortProperty = rivalry.deaths;
+
+        const assistsEntry = row.querySelector("td[assists]");
+        assistsEntry.textContent = rivalry.assists;
+        assistsEntry.sortProperty = rivalry.assists;
     }
 }
 
@@ -697,7 +710,7 @@ async function showPlayerDetails(playerId) {
     gameDetails.showModal();
 }
 
-function sortTable(headerElement, transform) {
+function sortTable(headerElement) {
     const headerRow = headerElement.parentElement;
     const tableHeader = headerRow.parentElement;
     const table = tableHeader.parentElement;
@@ -706,37 +719,32 @@ function sortTable(headerElement, transform) {
 
     table.toggleAttribute("ascending");
 
+    const ascending = table.hasAttribute("ascending");
+
     let switching = true;
 
-    /* Make a loop that will continue until
-    no switching has been done: */
     while (switching) {
-        // Start by saying: no switching is done:
         let i = 1;
         switching = false;
         let shouldSwitch = false;
         const rows = table.rows;
 
-        /* Loop through all table rows (except the
-        first, which contains table headers): */
         for (i = 1; i < (rows.length - 1); i++) {
-            // Start by saying there should be no switching:
             shouldSwitch = false;
-            /* Get the two elements you want to compare,
-            one from current row and one from the next: */
+            
             const x = rows[i].getElementsByTagName("td")[column];
             const y = rows[i + 1].getElementsByTagName("td")[column];
-            // Check if the two rows should switch place:
-            if (table.hasAttribute("ascending") ? transform(x) > transform(y) : transform(x) < transform(y)) {
-                // If so, mark as a switch and break the loop:
+
+            const xSort = x.sortProperty ?? x.textContent.toLowerCase();
+            const ySort = y.sortProperty ?? y.textContent.toLowerCase();
+
+            if (ascending ? xSort > ySort : xSort < ySort) {
                 shouldSwitch = true;
                 break;
             }
         }
 
         if (shouldSwitch) {
-            /* If a switch has been marked, make the switch
-            and mark that a switch has been done: */
             rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
             switching = true;
         }

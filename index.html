@@ -34,8 +34,8 @@
         <table id="games" class="styled-table">
             <thead>
                 <tr>
-                    <th clickable onclick="sortTable(this, (x) => x.firstChild.getAttribute('datetime'))">Date</th>
-                    <th clickable onclick="sortTable(this, (x) => Number.parseInt(x.textContent))">Players</th>
+                    <th clickable onclick="sortTable(this)">Date</th>
+                    <th clickable onclick="sortTable(this)">Players</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -75,12 +75,12 @@
         <table id="players" class="styled-table" ascending>
             <thead>
                 <tr>
-                    <th clickable onclick="sortTable(this, (x) => x.textContent.toLowerCase())">Name</th>
-                    <th clickable onclick="sortTable(this, (x) => Number.parseInt(x.textContent))">MMR</th>
-                    <th clickable onclick="sortTable(this, (x) => Number.parseInt(x.textContent))">Kills</th>
-                    <th clickable onclick="sortTable(this, (x) => Number.parseInt(x.textContent))">Deaths</th>
-                    <th clickable onclick="sortTable(this, (x) => Number.parseInt(x.textContent))">Assists</th>
-                    <th clickable onclick="sortTable(this, (x) => Number.parseInt(x.textContent))">Games</th>
+                    <th clickable onclick="sortTable(this)">Name</th>
+                    <th clickable onclick="sortTable(this)">MMR</th>
+                    <th clickable onclick="sortTable(this)">Kills</th>
+                    <th clickable onclick="sortTable(this)">Deaths</th>
+                    <th clickable onclick="sortTable(this)">Assists</th>
+                    <th clickable onclick="sortTable(this)">Games</th>
                 </tr>
             </thead>
             <tbody></tbody>
