@@ -1,10 +1,10 @@
 export class FileObserver extends EventTarget {
     #handle;
     #lastModified = 0;
+    #watchInterval = 5000;
+    #intervalPointer = null;
 
-    constructor() {
-        super();
-    }
+    get ready() { return this.#handle != null; }
 
     async openPicker(pickerOptions) {
         try {
@@ -21,15 +21,42 @@ Alternatively, you can copy & paste your file into a different folder (e.g., 'Do
     }
 
     async getFile(pickerOptions) {
-        if (!this.#handle) await this.openPicker(pickerOptions);
+        if (!this.ready) await this.openPicker(pickerOptions);
 
         /** @type {File} */
         const file = await this.#handle.getFile();
 
         if (this.#lastModified >= file.lastModified) return;
 
-        console.trace("Detected Change");
-
         this.#lastModified = file.lastModified;
+
+        this.dispatchEvent(new CustomEvent("change", {
+            detail: file
+        }));
+    }
+
+    start() {
+        if (this.#intervalPointer != null) return;
+
+        this.#intervalPointer = setInterval(() => {
+            if (!this.ready) return;
+            this.getFile();
+        }, this.#watchInterval);
+    }
+
+    stop() {
+        if (this.#intervalPointer == null) return;
+
+        clearInterval(this.#intervalPointer);
+
+        this.#intervalPointer = null;
+    }
+
+    constructor(options) {
+        super();
+
+        this.#watchInterval = options?.watchInterval ?? this.#watchInterval;
+
+        this.start();
     }
 }

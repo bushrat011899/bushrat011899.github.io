@@ -1,5 +1,6 @@
-import { DB } from "./database.js";
+import { DB } from "./DB.js";
 import { parseData } from "./attributesFile.js";
+import { FileObserver } from "./FileObserver.js";
 
 const db = new DB();
 
