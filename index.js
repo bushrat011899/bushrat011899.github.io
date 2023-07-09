@@ -203,11 +203,12 @@ async function showGameDetails(gameId) {
             "@ui_team_details_downed": "Downed Teammate",
             "@ui_team_details_hunter_downed_you ~~@ui_team_details_downed": "Downed Me",
             "@ui_team_details_killed_by_team_mate ~~@ui_team_details_killed": "Was Killed By Teammate",
-            "@ui_team_details_killed_team_mate ~~@ui_team_details_downed": "Killed Teammate",
+            "@ui_team_details_killed_team_mate ~~@ui_team_details_downed": "Downed Teammate",
+            "@ui_team_details_killed_team_mate ~~@ui_team_details_killed": "Killed Teammate",
             "@ui_team_details_killed": "Killed Teammate",
             "@ui_team_details_teammate_downed_hunter ~~@ui_team_details_downed": "Was Downed By Teammate",
             "@ui_team_details_you_downed_hunter ~~@ui_team_details_downed": "Was Downed By Me",
-            "@ui_team_details_extracted_bounty": "Extracted With Bounty"
+            "@ui_team_details_extracted_bounty": "Extracted With Bounty",
         };
 
         const label = labelMap[event.label] ?? event.label;
@@ -216,9 +217,17 @@ async function showGameDetails(gameId) {
         entry.append(clockEntry);
         clockEntry.textContent = clock;
 
+        const spacer1 = document.createElement("span");
+        entry.append(spacer1);
+        spacer1.textContent = " ";
+
         const playerNameEntry = document.createElement("em");
         entry.append(playerNameEntry);
         playerNameEntry.textContent = name;
+
+        const spacer2 = document.createElement("span");
+        entry.append(spacer2);
+        spacer2.textContent = " ";
 
         const detailsEntry = document.createElement("span");
         entry.append(detailsEntry);
@@ -469,10 +478,6 @@ async function updateStorageEstimate() {
     totalElement.textContent = bytesToMegaBytes(quota.quota ?? 0).toFixed(2);
 }
 
-
-
-const watchInterval = 1000 * 5;
-
 const attributes = {
     handle: null,
     lastModified: 0
@@ -596,4 +601,4 @@ await updateUI();
 setInterval(() => {
     if (!attributes.handle) return;
     getFile();
-}, watchInterval);
+}, 1000 * 5);
