@@ -5,6 +5,10 @@ const db = new DB();
 
 async function playerRivalry(id) {
     const { stores, completed } = db.transaction(["event"], "readonly");
+    
+    const events = await DB.do(() => stores.event.index("profile").getAll(id));
+
+    await completed;
 
     const stats = {
         kills: 0,
@@ -12,8 +16,6 @@ async function playerRivalry(id) {
         assists: 0,
         collateral: 0
     };
-    
-    const events = await DB.do(() => stores.event.index("profile").getAll(id));
 
     for (const event of events) {
         if (event.category == "downedbyme" || event.category == "killedbyme") {
@@ -27,8 +29,6 @@ async function playerRivalry(id) {
         }
     }
 
-    await completed;
-
     return stats;
 }
 
@@ -36,6 +36,8 @@ async function playerMMRStats(id) {
     const { stores, completed } = db.transaction(["playerMMR"], "readonly");
 
     const mmrs = await DB.do(() => stores.playerMMR.index("profile").getAll(id));
+
+    await completed;
 
     /** @type {number} */
     const count = mmrs.length;
@@ -53,8 +55,6 @@ async function playerMMRStats(id) {
         std: Math.sqrt(variance),
         count
     };
-
-    await completed;
 
     return stats;
 }
@@ -163,6 +163,8 @@ async function showGameDetails(gameId) {
 
     const events = await DB.do(() => stores.event.index("game").getAll(gameId));
 
+    await completed;
+
     events.sort((a, b) => a.clock - b.clock);
 
     const eventsList = gameDetails.querySelector("ol[events]");
@@ -233,8 +235,6 @@ async function showGameDetails(gameId) {
         entry.append(detailsEntry);
         detailsEntry.textContent = label;
     }
-
-    await completed;
 
     gameDetails.showModal();
 }
@@ -344,15 +344,16 @@ async function updateTableOfPlayers() {
 }
 
 async function showPlayerDetails(playerId) {
-    const gameDetails = document.querySelector("dialog#playerDetails");
-    const mmrChartArea = gameDetails.querySelector("div#chartArea");
-
     const { stores, completed } = db.transaction(["playerMMR", "playerName"], "readonly");
 
-    const playerMMRsStore = stores.playerMMR;
-    const playerNamesStore = stores.playerName;
+    const playerNames = await DB.do(() => stores.playerName.index("profile").getAll(playerId));
 
-    const playerNames = await DB.do(() => playerNamesStore.index("profile").getAll(playerId));
+    const playerMMRs = await DB.do(() => stores.playerMMR.index("profile").getAll(playerId));
+
+    await completed;
+    
+    const gameDetails = document.querySelector("dialog#playerDetails");
+    const mmrChartArea = gameDetails.querySelector("div#chartArea");
 
     playerNames.sort((a, b) => b.date - a.date);
 
@@ -363,7 +364,6 @@ async function showPlayerDetails(playerId) {
 
     gameDetails.querySelector("span[profile]").textContent = playerId;
 
-    const playerMMRs = await DB.do(() => playerMMRsStore.index("profile").getAll(playerId));
 
     playerMMRs.sort((a, b) => a.date - b.date);
 
@@ -404,8 +404,6 @@ async function showPlayerDetails(playerId) {
             }
         }
     });
-
-    await completed;
     
     const mmrStats = await playerMMRStats(playerId);
 
