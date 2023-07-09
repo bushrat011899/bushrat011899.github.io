@@ -28,8 +28,6 @@ const MIME_TYPES = {
 const PORT = 8181;
 
 function serveStatic(req, res) {
-    console.log(`${req.method} ${req.url}`);
-  
     const parsedUrl = url.parse(req.url);
 
     const parsedPath = `.${parsedUrl.pathname}`;
@@ -38,16 +36,22 @@ function serveStatic(req, res) {
     
     const pathname = `${parsedPath}${isFolder ? '/index.html' : ''}`;
     
-    const ext = isFolder ? path.parse(pathname).ext : '.html';
+    const ext = !isFolder ? path.parse(pathname).ext : '.html';
+
+    const mime = MIME_TYPES[ext] || 'text/plain';
+
+    res.setHeader('Content-type', mime );
+
+    console.log(`${req.method} ${req.url} ${mime}`);
 
     // read file from file system
     fs.readFile(pathname, (err, data) => {
         if (err) {
             res.statusCode = 500;
+            res.setHeader('Content-type', 'text/plain' );
             res.end(`Error getting the file: ${err}.`);
         } else {
             // if the file is found, set Content-type and send data
-            res.setHeader('Content-type', MIME_TYPES[ext] || 'text/plain' );
             res.end(data);
         }
     });

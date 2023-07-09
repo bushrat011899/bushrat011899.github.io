@@ -1,187 +1,10 @@
-let DB = null;
-async function setupDB() {
-    const persist = await navigator.storage.persist();
+import { DB } from "./database.js";
+import { parseData } from "./attributesFile.js";
 
-    if (persist) {
-        console.log("Storage will not be cleared except by explicit user action");
-    } else {
-        console.log("Storage may be cleared by the UA under storage pressure.");
-    }
-
-    const db = await new Promise((resolve, reject) => {
-        const request = indexedDB.open("HuntShowStats");
-        
-        request.onerror = (event) => {
-            console.error("Could not open an IndexDB", event);
-            reject(event);
-        };
-        
-        request.onsuccess = (event) => {
-            const db = event.target.result;
-            resolve(db);
-        };
-
-        request.onupgradeneeded = (event) => {
-            const db = event.target.result;
-          
-            const game = db.createObjectStore("game", { keyPath: "id" });
-
-            game.createIndex("date", "date", { unique: false });
-
-            const profile = db.createObjectStore("profile", { keyPath: "id" });
-
-            profile.createIndex("date", "date", { unique: false });
-
-            const playerMMR = db.createObjectStore("playerMMR", { keyPath: ["game", "profile"] });
-
-            playerMMR.createIndex("game", "game", { unique: false });
-            playerMMR.createIndex("profile", "profile", { unique: false });
-            playerMMR.createIndex("date", "date", { unique: false });
-
-            const playerName = db.createObjectStore("playerName", { keyPath: ["profile", "name"] });
-
-            playerName.createIndex("profile", "profile", { unique: false });
-            playerName.createIndex("date", "date", { unique: false });
-          
-            const team = db.createObjectStore("team", { keyPath: ["game", "number"] });
-
-            team.createIndex("game", "game", { unique: false });
-            team.createIndex("number", "number", { unique: false });
-            team.createIndex("date", "date", { unique: false });
-          
-            const teamMember = db.createObjectStore("teamMember", { keyPath: ["game", "number", "profile"] });
-
-            teamMember.createIndex("game", "game", { unique: false });
-            teamMember.createIndex("game_number", ["game", "number"], { unique: false });
-            teamMember.createIndex("profile", "profile", { unique: false });
-            teamMember.createIndex("date", "date", { unique: false });
-
-            const eventStore = db.createObjectStore("event", { keyPath: ["game", "profile", "category", "label", "clock"] });
-
-            eventStore.createIndex("game", "game", { unique: false });
-            eventStore.createIndex("profile", "profile", { unique: false });
-            eventStore.createIndex("category", "category", { unique: false });
-            eventStore.createIndex("label", "label", { unique: false });
-            eventStore.createIndex("clock", "clock", { unique: false });
-            eventStore.createIndex("date", "date", { unique: false });
-        };
-    });
-
-    DB = db;
-
-    return db;
-}
-
-async function importDB() {
-    const stores = DB.objectStoreNames;
-
-    const fileInput = document.querySelector("footer input#import");
-
-    fileInput.click();
-
-    let interval;
-    await new Promise((resolve) => {
-        interval = setInterval(() => {
-            if (fileInput.files[0]) resolve()
-        }, 100);
-    });
-    clearInterval(interval);
-
-    const textDump = await fileInput.files[0].text();
-
-    const dump = JSON.parse(textDump);
-    
-    const transaction = DB.transaction(stores, "readwrite");
-
-    for (const storeName in dump) {
-        const store = transaction.objectStore(storeName);
-
-        for (const entry of dump[storeName]) await waitFor(() => store.put(entry));
-    }
-
-    await new Promise((resolve, reject) => {
-        transaction.oncomplete = (event) => { resolve(); };
-        transaction.onerror = (event) => { reject(event); }
-    });
-
-    await updateUI();
-}
-
-async function exportDB() {
-    const dump = {};
-
-    const stores = DB.objectStoreNames;
-    
-    const transaction = DB.transaction(stores, "readonly");
-
-    for (const storeName of stores) {
-        const store = transaction.objectStore(storeName);
-
-        dump[storeName] = await waitFor(() => store.getAll());
-    }
-
-    await new Promise((resolve, reject) => {
-        transaction.oncomplete = (event) => { resolve(); };
-        transaction.onerror = (event) => { reject(event); }
-    });
-
-    const textDump = JSON.stringify(dump, null, 2);
-
-    const file = new File([textDump], "export.json", {
-        type: "application/json",
-    });
-
-    const url = URL.createObjectURL(file);
-
-    const downloadButton = document.createElement("a");
-    downloadButton.href = url;
-    downloadButton.setAttribute("download", file.name);
-
-    setTimeout(() => {
-        downloadButton.remove();
-    }, 10000);
-
-    downloadButton.click();
-}
-
-async function waitFor(dbOperation) {
-    return await new Promise((resolve, reject) => {
-        dbOperation().onsuccess = (event) => {
-            const result = event.target.result;
-            resolve(result);
-        };
-    });
-}
-
-async function gameHash(teams) {
-    // Consider a game unique by its player composition and MMRs.
-    let data = "";
-
-    for (const teamId in teams) {
-        const team = teams[teamId];
-        data += `MMR${team.mmr} #${team.numplayers}\n`;
-
-        for (const playerId in team.members) {
-            const player = team.members[playerId];
-
-            data += `(ID${player.profileid} AS ${player.blood_line_name} AT ${player.mmr})\n`;
-        }
-    }
-
-    const msgUint8 = new TextEncoder().encode(data);
-    const hashBuffer = await crypto.subtle.digest("SHA-256", msgUint8);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
-
-    return hashHex;
-}
+const db = new DB();
 
 async function playerRivalry(id) {
-    const transaction = DB.transaction(["event"], "readonly");
-
-    const eventsStore = transaction.objectStore("event");
+    const { stores, completed } = db.transaction(["event"], "readonly");
 
     const stats = {
         kills: 0,
@@ -190,7 +13,7 @@ async function playerRivalry(id) {
         collateral: 0
     };
     
-    const events = await waitFor(() => eventsStore.index("profile").getAll(id));
+    const events = await DB.do(() => stores.event.index("profile").getAll(id));
 
     for (const event of events) {
         if (event.category == "downedbyme" || event.category == "killedbyme") {
@@ -204,22 +27,19 @@ async function playerRivalry(id) {
         }
     }
 
-    await new Promise((resolve, reject) => {
-        transaction.oncomplete = (event) => { resolve(); };
-        transaction.onerror = (event) => { reject(event); }
-    });
+    await completed;
 
     return stats;
 }
 
 async function playerMMRStats(id) {
-    const transaction = DB.transaction(["playerMMR"], "readonly");
+    const { stores, completed } = db.transaction(["playerMMR"], "readonly");
 
-    const playerMMRsStore = transaction.objectStore("playerMMR");
+    const mmrs = await DB.do(() => stores.playerMMR.index("profile").getAll(id));
 
-    const mmrs = await waitFor(() => playerMMRsStore.index("profile").getAll(id));
-
+    /** @type {number} */
     const count = mmrs.length;
+
     const sum1 = mmrs.reduce((s, entry) => s + Number.parseInt(entry.mmr), 0);
     const sum2 = mmrs.reduce((s, entry) => s + Number.parseInt(entry.mmr) ** 2, 0);
 
@@ -234,122 +54,15 @@ async function playerMMRStats(id) {
         count
     };
 
-    await new Promise((resolve, reject) => {
-        transaction.oncomplete = (event) => { resolve(); };
-        transaction.onerror = (event) => { reject(event); }
-    });
+    await completed;
 
     return stats;
 }
 
-async function storeGame(game) {
-    const gameId = await gameHash(game);
-
-    const transaction = DB.transaction(["game", "team", "teamMember", "profile", "playerName", "playerMMR", "event"], "readwrite");
-    const gamesStore = transaction.objectStore("game");
-    const teamsStore = transaction.objectStore("team");
-    const teamMembersStore = transaction.objectStore("teamMember");
-    const profilesStore = transaction.objectStore("profile");
-    const playerNamesStore = transaction.objectStore("playerName");
-    const playerMMRsStore = transaction.objectStore("playerMMR");
-    const eventsStore = transaction.objectStore("event");
-
-    const stamp = Date.now();
-
-    const alreadyAdded = await new Promise((resolve) => {
-        const request = gamesStore.get(gameId);
-        request.onsuccess = (event) => {
-            resolve(event.target.result != null);
-        };
-        request.onerror = (event) => {
-            resolve(false);
-        };
-    });
-
-    if (alreadyAdded) return;
-
-    gamesStore.put({
-        id: gameId,
-        date: stamp
-    });
-
-    for (const teamId in game) {
-        const team = game[teamId];
-
-        teamsStore.put({
-            game: gameId,
-            number: teamId,
-            mmr: team.mmr,
-            own: team.ownteam == "true",
-            date: stamp
-        });
-
-        for (const playerId in team.members) {
-            const player = team.members[playerId];
-
-            teamMembersStore.put({
-                game: gameId,
-                number: teamId,
-                profile: player.profileid,
-                date: stamp
-            });
-
-            profilesStore.put({
-                id: player.profileid,
-                date: stamp
-            });
-
-            playerNamesStore.put({
-                profile: player.profileid,
-                name: player.blood_line_name,
-                date: stamp
-            });
-
-            playerMMRsStore.put({
-                game: gameId,
-                profile: player.profileid,
-                mmr: player.mmr,
-                date: stamp
-            });
-
-            for (const propertyId in player) {
-                const regex = /(@.*?)~([0-9]{1,2}):([0-9]{2})/g;
-
-                if (!propertyId.startsWith("tooltip")) continue;
-
-                const category = propertyId.split("tooltip")[1].replace("_", "");
-
-                const matches = player[propertyId].matchAll(regex);
-
-                for (const [match, label, minutes, seconds] of matches) {
-                    const clock = Number.parseInt(minutes) * 60 + Number.parseInt(seconds);
-                    
-                    eventsStore.put({
-                        game: gameId,
-                        profile: player.profileid,
-                        category: category.trim(),
-                        label: label.trim(),
-                        clock,
-                        date: stamp
-                    })
-                }
-            }
-        }
-    }
-
-    await new Promise((resolve, reject) => {
-        transaction.oncomplete = (event) => { resolve(); };
-        transaction.onerror = (event) => { reject(event); }
-    });
-}
-
 async function updateTableOfGames() {
-    const transaction = DB.transaction(["game", "teamMember"], "readonly");
+    const { stores, completed } = db.transaction(["game", "teamMember"], "readonly");
 
-    const gamesStore = transaction.objectStore("game");
-    const teamMembersStore = transaction.objectStore("teamMember");
-
-    const games = await waitFor(() => gamesStore.index("date").getAll());
+    const games = await DB.do(() => stores.game.index("date").getAll());
 
     const tableBody = document.querySelector("table#games > tbody");
 
@@ -370,7 +83,7 @@ async function updateTableOfGames() {
         dateEntry.append(dateTimeEntry);
         row.append(dateEntry);
 
-        const playerCount = await waitFor(() => teamMembersStore.index("game").count(game.id));
+        const playerCount = await DB.do(() => stores.teamMember.index("game").count(game.id));
 
         const playerCountEntry = document.createElement("td");
         playerCountEntry.textContent = playerCount;
@@ -384,10 +97,7 @@ async function updateTableOfGames() {
         });
     }
 
-    await new Promise((resolve, reject) => {
-        transaction.oncomplete = (event) => { resolve(); };
-        transaction.onerror = (event) => { reject(event); }
-    });
+    await completed;
 }
 
 async function showGameDetails(gameId) {
@@ -398,20 +108,13 @@ async function showGameDetails(gameId) {
         tableBody.removeChild(tableBody.lastChild);
     }
 
-    const transaction = DB.transaction(["game", "teamMember", "playerName", "playerMMR", "event", "team"], "readonly");
+    const { stores, completed } = db.transaction(["game", "teamMember", "playerName", "playerMMR", "event", "team"], "readonly");
 
-    const gamesStore = transaction.objectStore("game");
-    const teamMembersStore = transaction.objectStore("teamMember");
-    const playerNamesStore = transaction.objectStore("playerName");
-    const playerMMRsStore = transaction.objectStore("playerMMR");
-    const eventsStore = transaction.objectStore("event");
-    const teamsStore = transaction.objectStore("team");
-
-    const game = await waitFor(() => gamesStore.get(gameId));
+    const game = await DB.do(() => stores.game.get(gameId));
 
     const gameDate = new Date(game.date);
 
-    const teamMembers = await waitFor(() => teamMembersStore.index("game").getAll(gameId));
+    const teamMembers = await DB.do(() => stores.teamMember.index("game").getAll(gameId));
 
     gameDetails.querySelector("em").textContent = gameDate.toLocaleString();
 
@@ -419,8 +122,8 @@ async function showGameDetails(gameId) {
     let spannedRows = {};
 
     for (const teamMember of teamMembers) {
-        const teamSize = await waitFor(() => teamMembersStore.index("game_number").count([gameId, teamMember.number]));
-        const team = await waitFor(() => teamsStore.get([gameId, teamMember.number]));
+        const teamSize = await DB.do(() => stores.teamMember.index("game_number").count([gameId, teamMember.number]));
+        const team = await DB.do(() => stores.team.get([gameId, teamMember.number]));
 
         const row = document.createElement("tr");
         row.setAttribute("player", teamMember.profile);
@@ -435,7 +138,7 @@ async function showGameDetails(gameId) {
             spannedRows[teamMember.number] = true;
         }
 
-        const playerNames = await waitFor(() => playerNamesStore.index("profile").getAll(teamMember.profile));
+        const playerNames = await DB.do(() => stores.playerName.index("profile").getAll(teamMember.profile));
 
         playerNames.sort((a, b) => b.date - a.date);
 
@@ -445,7 +148,7 @@ async function showGameDetails(gameId) {
         nameEntry.textContent = playerNameMapping[teamMember.profile];
         row.append(nameEntry);
 
-        const playerMMR = await waitFor(() => playerMMRsStore.get([gameId, teamMember.profile]));
+        const playerMMR = await DB.do(() => stores.playerMMR.get([gameId, teamMember.profile]));
 
         const MMREntry = document.createElement("td");
         MMREntry.textContent = playerMMR.mmr;
@@ -458,7 +161,7 @@ async function showGameDetails(gameId) {
         });
     }
 
-    const events = await waitFor(() => eventsStore.index("game").getAll(gameId));
+    const events = await DB.do(() => stores.event.index("game").getAll(gameId));
 
     events.sort((a, b) => a.clock - b.clock);
 
@@ -522,23 +225,15 @@ async function showGameDetails(gameId) {
         detailsEntry.textContent = label;
     }
 
-    await new Promise((resolve, reject) => {
-        transaction.oncomplete = (event) => { resolve(); };
-        transaction.onerror = (event) => { reject(event); }
-    });
+    await completed;
 
     gameDetails.showModal();
 }
 
 async function updateTableOfPlayers() {
-    const transaction = DB.transaction(["profile", "playerName", "playerMMR", "teamMember"], "readonly");
+    const { stores, completed } = db.transaction(["profile", "playerName", "playerMMR", "teamMember"], "readonly");
 
-    const profilesStore = transaction.objectStore("profile");
-    const playerNamesStore = transaction.objectStore("playerName");
-    const playerMMRsStore = transaction.objectStore("playerMMR");
-    const teamMembersStore = transaction.objectStore("teamMember");
-
-    const profiles = await waitFor(() => profilesStore.getAll());
+    const profiles = await DB.do(() => stores.profile.getAll());
 
     const tableBody = document.querySelector("table#players > tbody");
 
@@ -550,7 +245,7 @@ async function updateTableOfPlayers() {
             return row;
         })();
 
-        const playerNames = await waitFor(() => playerNamesStore.index("profile").getAll(profile.id));
+        const playerNames = await DB.do(() => stores.playerName.index("profile").getAll(profile.id));
 
         playerNames.sort((a, b) => b.date - a.date);
 
@@ -564,7 +259,7 @@ async function updateTableOfPlayers() {
         nameEntry.textContent = playerNames[0].name;
         nameEntry.sortProperty = playerNames[0].name.toLowerCase();
 
-        const playerMMRs = await waitFor(() => playerMMRsStore.index("profile").getAll(profile.id));
+        const playerMMRs = await DB.do(() => stores.playerMMR.index("profile").getAll(profile.id));
 
         playerMMRs.sort((a, b) => b.date - a.date);
 
@@ -578,7 +273,7 @@ async function updateTableOfPlayers() {
         MMREntry.textContent = playerMMRs[0].mmr;
         MMREntry.sortProperty = Number.parseInt(playerMMRs[0].mmr);
 
-        const playedGames = await waitFor(() => teamMembersStore.index("profile").count(profile.id));
+        const playedGames = await DB.do(() => stores.teamMember.index("profile").count(profile.id));
 
         const killsEntry = row.querySelector(`td[kills]`) ?? (() => {
             const killsEntry = document.createElement("td");
@@ -618,10 +313,7 @@ async function updateTableOfPlayers() {
         });
     }
 
-    await new Promise((resolve, reject) => {
-        transaction.oncomplete = (event) => { resolve(); };
-        transaction.onerror = (event) => { reject(event); }
-    });
+    await completed;
 
     for (const profile of profiles) {
         const rivalry = await playerRivalry(profile.id);
@@ -646,12 +338,12 @@ async function showPlayerDetails(playerId) {
     const gameDetails = document.querySelector("dialog#playerDetails");
     const mmrChartArea = gameDetails.querySelector("div#chartArea");
 
-    const transaction = DB.transaction(["playerMMR", "playerName"], "readonly");
+    const { stores, completed } = db.transaction(["playerMMR", "playerName"], "readonly");
 
-    const playerMMRsStore = transaction.objectStore("playerMMR");
-    const playerNamesStore = transaction.objectStore("playerName");
+    const playerMMRsStore = stores.playerMMR;
+    const playerNamesStore = stores.playerName;
 
-    const playerNames = await waitFor(() => playerNamesStore.index("profile").getAll(playerId));
+    const playerNames = await DB.do(() => playerNamesStore.index("profile").getAll(playerId));
 
     playerNames.sort((a, b) => b.date - a.date);
 
@@ -662,7 +354,7 @@ async function showPlayerDetails(playerId) {
 
     gameDetails.querySelector("span[profile]").textContent = playerId;
 
-    const playerMMRs = await waitFor(() => playerMMRsStore.index("profile").getAll(playerId));
+    const playerMMRs = await DB.do(() => playerMMRsStore.index("profile").getAll(playerId));
 
     playerMMRs.sort((a, b) => a.date - b.date);
 
@@ -704,10 +396,7 @@ async function showPlayerDetails(playerId) {
         }
     });
 
-    await new Promise((resolve, reject) => {
-        transaction.oncomplete = (event) => { resolve(); };
-        transaction.onerror = (event) => { reject(event); }
-    });
+    await completed;
     
     const mmrStats = await playerMMRStats(playerId);
 
@@ -836,47 +525,11 @@ async function getFile() {
     
     const doc = parser.parseFromString(text, "application/xml");
 
-    await parseData(doc);
+    const dump = await parseData(doc);
+
+    await db.import(dump);
 
     await updateUI();
-}
-
-async function parseData(doc) {
-    const numTeamsEntry = doc.querySelector(`Attr[name="MissionBagNumTeams"]`);
-    const numTeams = Number.parseInt(numTeamsEntry.attributes.value.value);
-
-    const teams = {};
-
-    const teamEntries = doc.querySelectorAll(`Attr[name^="MissionBagTeam_"]`);
-    for (const teamEntry of teamEntries) {
-        const [_, team, entry] = teamEntry.attributes.name.value.split("_");
-        const value = teamEntry.attributes.value.value;
-
-        if (entry == null) continue;
-        if (team >= numTeams) continue;
-
-        teams[team] ??= {
-            members: {}
-        };
-
-        teams[team][entry] = value;
-    }
-
-    const playerEntries = doc.querySelectorAll(`Attr[name^="MissionBagPlayer_"]`);
-    for (const playerEntry of playerEntries) {
-        const [_, team, player, ...rest] = playerEntry.attributes.name.value.split("_");
-        const entry = rest.join("_");
-        const value = playerEntry.attributes.value.value;
-
-        if (entry == null) continue;
-        if (team >= numTeams) continue;
-        if (player >= teams[team]["numplayers"]) continue;
-
-        teams[team].members[player] ??= {};
-        teams[team].members[player][entry] = value;
-    }
-
-    await storeGame(teams);
 }
 
 async function updateUI() {
@@ -887,13 +540,60 @@ async function updateUI() {
     ]);
 }
 
-async function watchFile() {
-    if (!attributes.handle) return;
-    await getFile();
+async function importDB() {
+    const fileInput = document.querySelector("footer input#import");
+
+    fileInput.click();
+
+    let interval;
+    await new Promise((resolve) => {
+        interval = setInterval(() => {
+            if (fileInput.files[0]) resolve()
+        }, 100);
+    });
+    clearInterval(interval);
+
+    const textDump = await fileInput.files[0].text();
+
+    const dump = JSON.parse(textDump);
+
+    await db.import(dump);
+
+    await updateUI();
 }
 
-setupDB().then(updateUI);
+async function exportDB() {
+    const dump = await db.export();
+
+    const textDump = JSON.stringify(dump, null, 2);
+
+    const file = new File([textDump], "export.json", {
+        type: "application/json",
+    });
+
+    const url = URL.createObjectURL(file);
+
+    const downloadButton = document.createElement("a");
+    downloadButton.href = url;
+    downloadButton.setAttribute("download", file.name);
+
+    setTimeout(() => {
+        downloadButton.remove();
+    }, 10000);
+
+    downloadButton.click();
+}
+
+window.getFile = getFile;
+window.importDB = importDB;
+window.exportDB = exportDB;
+window.sortTable = sortTable;
+
+await db.open();
+
+await updateUI();
 
 setInterval(() => {
-    watchFile();
+    if (!attributes.handle) return;
+    getFile();
 }, watchInterval);
