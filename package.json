@@ -2,14 +2,20 @@
   "name": "bushrat-site",
   "version": "1.0.0",
   "description": "Personal site on GitHub Pages",
-  "main": "index.html",
+  "private": true,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack --mode production",
     "server": "node server.js",
     "openssl": "openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout server.key -out server.crt"
   },
   "author": "Zac Harrold",
   "license": "GNUv3",
+  "devDependencies": {
+    "webpack": "^5.88.1",
+    "webpack-cli": "^5.1.4"
+  },
   "dependencies": {
+    "chart.js": "^4.3.0"
   }
 }

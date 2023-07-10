@@ -1,8 +1,21 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
     <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="Personal statistics tracker for the video game Hunt: Showdown.">
+
         <title>Hunt: ShowStats</title>
-        <link rel="stylesheet" href="index.css" type="text/css">
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+        <link rel="stylesheet" href="style.css" type="text/css">
+        <style id="theme">
+            :root {
+                --colour-primary: #009879;
+                --colour-secondary: #5b0098;
+            }
+        </style>
+
+        <script defer src="/dist/main.js" type="module"></script>
     </head>
     <body>
         <noscript>
@@ -11,14 +24,6 @@
                 <p>This application requires JavaScript in order to function, as all computation and data storage is done in your browser. Please whitelist this page.</p>
             </div>
         </noscript>
-        
-        <script src="/index.js" type="module"></script>
-        <style id="theme">
-            :root {
-                --colour-primary: #009879;
-                --colour-secondary: #5b0098;
-            }
-        </style>
 
         <header>
             <h1 style="float: left;">Hunt: ShowStats</h1>
@@ -34,8 +39,8 @@
         <table id="games" class="styled-table">
             <thead>
                 <tr>
-                    <th clickable onclick="sortTable(this)">Date</th>
-                    <th clickable onclick="sortTable(this)">Players</th>
+                    <th clickable sortable>Date</th>
+                    <th clickable sortable>Players</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -75,12 +80,12 @@
         <table id="players" class="styled-table" ascending>
             <thead>
                 <tr>
-                    <th clickable onclick="sortTable(this)">Name</th>
-                    <th clickable onclick="sortTable(this)">MMR</th>
-                    <th clickable onclick="sortTable(this)">Kills</th>
-                    <th clickable onclick="sortTable(this)">Deaths</th>
-                    <th clickable onclick="sortTable(this)">Assists</th>
-                    <th clickable onclick="sortTable(this)">Games</th>
+                    <th clickable sortable>Name</th>
+                    <th clickable sortable>MMR</th>
+                    <th clickable sortable>Kills</th>
+                    <th clickable sortable>Deaths</th>
+                    <th clickable sortable>Assists</th>
+                    <th clickable sortable>Games</th>
                 </tr>
             </thead>
             <tbody></tbody>

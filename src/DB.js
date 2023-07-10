@@ -1,3 +1,6 @@
+/**
+ * Encapsulated IndexedDB Database which maps common operations to a `Promise`.
+ */
 export class DB {
     static #DB_NAME = "HuntShowStats";
     static #CURRENT_VERSION = 1;

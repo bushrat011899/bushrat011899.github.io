@@ -1,8 +1,13 @@
 import { DB } from "./DB.js";
 import { parseData } from "./attributesFile.js";
 import { FileObserver } from "./FileObserver.js";
+import { downloadFile } from "./downloadFile.js";
+import { sortTable } from "./sortTable.js";
+import Chart from 'chart.js/auto';
 
 const db = new DB();
+
+const fileObserver = new FileObserver();
 
 async function playerRivalry(id) {
     const { stores, completed } = db.transaction(["event"], "readonly");
@@ -421,47 +426,6 @@ async function showPlayerDetails(playerId) {
     gameDetails.showModal();
 }
 
-function sortTable(headerElement) {
-    const headerRow = headerElement.parentElement;
-    const tableHeader = headerRow.parentElement;
-    const table = tableHeader.parentElement;
-
-    const column = Array.from(headerRow.children).indexOf(headerElement);
-
-    table.toggleAttribute("ascending");
-
-    const ascending = table.hasAttribute("ascending");
-
-    let switching = true;
-
-    while (switching) {
-        let i = 1;
-        switching = false;
-        let shouldSwitch = false;
-        const rows = table.rows;
-
-        for (i = 1; i < (rows.length - 1); i++) {
-            shouldSwitch = false;
-            
-            const x = rows[i].getElementsByTagName("td")[column];
-            const y = rows[i + 1].getElementsByTagName("td")[column];
-
-            const xSort = x.sortProperty ?? x.textContent.toLowerCase();
-            const ySort = y.sortProperty ?? y.textContent.toLowerCase();
-
-            if (ascending ? xSort > ySort : xSort < ySort) {
-                shouldSwitch = true;
-                break;
-            }
-        }
-
-        if (shouldSwitch) {
-            rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-            switching = true;
-        }
-    }
-}
-
 async function updateStorageEstimate() {
     function bytesToMegaBytes(xB) {
         return xB / 1024 / 1024;
@@ -477,13 +441,16 @@ async function updateStorageEstimate() {
     totalElement.textContent = bytesToMegaBytes(quota.quota ?? 0).toFixed(2);
 }
 
-const attributes = {
-    handle: null,
-    lastModified: 0
-};
+async function updateUI() {
+    await Promise.all([
+        updateStorageEstimate(),
+        updateTableOfGames(),
+        updateTableOfPlayers()
+    ]);
+}
 
-async function getHandle() {
-    const pickerOpts = {
+async function main() {
+    window.getFile = () => fileObserver.getFile({
         types: [
             {
                 description: "Hunt Showdown Attributes",
@@ -494,110 +461,68 @@ async function getHandle() {
         ],
         excludeAcceptAllOption: true,
         multiple: false,
+    });
+    
+    window.importDB = async () => {
+        const fileInput = document.querySelector("footer input#import");
+    
+        fileInput.click();
+    
+        let interval;
+        await new Promise((resolve) => {
+            interval = setInterval(() => {
+                if (fileInput.files[0]) resolve()
+            }, 100);
+        });
+        clearInterval(interval);
+    
+        const textDump = await fileInput.files[0].text();
+    
+        const dump = JSON.parse(textDump);
+    
+        await db.import(dump);
+    
+        await updateUI();
     };
-
-    try {
-
-        const [fileHandle] = await window.showOpenFilePicker(pickerOpts);
     
-        attributes.handle = fileHandle;
+    window.exportDB = async () => {
+        const dump = await db.export();
     
-        document.querySelector("button#fileButton").toggleAttribute("hidden", true);
-    } catch(e) {
-        console.error(e);
-        alert(
-`You cannot open this file. If your 'attributes.xml' is in a system folder (e.g., 'Program Files (x86)'), then you need to create a directory junction to allow your browser to open that file.
-
-Alternatively, you can copy & paste your 'attributes.xml' into a different folder (e.g., 'Documents') to read the data once.`)
+        const textDump = JSON.stringify(dump, null, 2);
+    
+        const file = new File([textDump], "export.json", {
+            type: "application/json",
+        });
+    
+        downloadFile(file);
+    };
+    
+    fileObserver.addEventListener("change", async (event) => {
+        /** @type {File} */
+        const file = event.detail;
+    
+        const text = await file.text();
+    
+        const parser = new DOMParser();
+        
+        const doc = parser.parseFromString(text, "application/xml");
+    
+        const dump = await parseData(doc);
+    
+        await db.import(dump);
+    
+        await updateUI();
+    });
+    
+    for (const cell of document.querySelectorAll("table thead tr th[sortable]")) {
+        cell.addEventListener("click", () => {
+            sortTable(cell);
+        });
     }
-}
-
-async function getFile() {
-    if (!attributes.handle) await getHandle();
-
-    const file = await attributes.handle.getFile();
-
-    if (attributes.lastModified >= file.lastModified) return;
-
-    console.trace("Detected Change");
-
-    attributes.lastModified = file.lastModified;
-
-    const text = await file.text();
-
-    const parser = new DOMParser();
     
-    const doc = parser.parseFromString(text, "application/xml");
-
-    const dump = await parseData(doc);
-
-    await db.import(dump);
-
+    await db.open();
+    
     await updateUI();
 }
 
-async function updateUI() {
-    await Promise.all([
-        updateStorageEstimate(),
-        updateTableOfGames(),
-        updateTableOfPlayers()
-    ]);
-}
-
-async function importDB() {
-    const fileInput = document.querySelector("footer input#import");
-
-    fileInput.click();
-
-    let interval;
-    await new Promise((resolve) => {
-        interval = setInterval(() => {
-            if (fileInput.files[0]) resolve()
-        }, 100);
-    });
-    clearInterval(interval);
-
-    const textDump = await fileInput.files[0].text();
-
-    const dump = JSON.parse(textDump);
-
-    await db.import(dump);
-
-    await updateUI();
-}
-
-async function exportDB() {
-    const dump = await db.export();
-
-    const textDump = JSON.stringify(dump, null, 2);
-
-    const file = new File([textDump], "export.json", {
-        type: "application/json",
-    });
-
-    const url = URL.createObjectURL(file);
-
-    const downloadButton = document.createElement("a");
-    downloadButton.href = url;
-    downloadButton.setAttribute("download", file.name);
-
-    setTimeout(() => {
-        downloadButton.remove();
-    }, 10000);
-
-    downloadButton.click();
-}
-
-window.getFile = getFile;
-window.importDB = importDB;
-window.exportDB = exportDB;
-window.sortTable = sortTable;
-
-await db.open();
-
-await updateUI();
-
-setInterval(() => {
-    if (!attributes.handle) return;
-    getFile();
-}, 1000 * 5);
+await main();
