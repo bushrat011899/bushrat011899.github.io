@@ -4,19 +4,16 @@ module.exports = {
     module: {
         rules: [
             {
-                test: /\.css$/i,
-                use: [
-                    // Creates `style` nodes from JS strings
-                    'style-loader',
-                    // Translates CSS into CommonJS
-                    'css-loader'
-                ],
-            },
-            {
                 test: /\.s[ac]ss$/i,
                 use: [
                     // Creates `style` nodes from JS strings
-                    "style-loader",
+                    {
+                        loader: 'style-loader',
+                        options: { 
+                            insert: 'head', // insert style tag inside of <head>
+                            injectType: 'singletonStyleTag' // this is for wrap all your style in just one style tag
+                        },
+                    },
                     // Translates CSS into CommonJS
                     "css-loader",
                     // Compiles Sass to CSS
