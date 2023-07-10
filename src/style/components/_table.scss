@@ -1,0 +1,47 @@
+.styled-table {
+    border-collapse: collapse;
+    margin: 25px 0;
+    font-size: 0.9em;
+    font-family: sans-serif;
+    min-width: 400px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    width: 100%;
+    white-space: nowrap;
+    text-align: center;
+    border: 2px solid var(--colour-primary);
+
+    th, td {
+        padding: 12px 15px;
+    }
+
+    thead {
+        tr {
+            background-color: var(--colour-primary);
+            color: #ffffff;
+            text-align: center;
+        }
+    }
+
+    tbody {
+        tr {
+            border-bottom: 1px solid #dddddd;
+        }
+
+        tr.myTeam {
+            font-weight: bold;
+            color: var(--colour-primary);
+            fill: var(--colour-primary);
+
+            th.me {
+                font-weight: bold;
+                color: var(--colour-secondary);
+                fill: var(--colour-secondary);
+            }
+        }
+    }
+
+    td:last-child,
+    th:last-child {
+        width: 100%;
+    }
+}

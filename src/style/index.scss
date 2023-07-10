@@ -1,0 +1,132 @@
+@use "components/hidden";
+@use "components/clickable";
+@use "components/noscript";
+@use "components/table";
+
+body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+header {
+    background-color: var(--colour-primary);
+    width: 100%;
+    height: 100px;
+    vertical-align: middle;
+    display: inline-block;
+
+    * {
+        margin-top: 0;
+        margin-bottom: 0;
+        margin-left: 1em;
+        margin-right: 1em;
+        line-height: 100px;
+    }
+}
+
+footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    background-color: var(--colour-primary);
+    width: 100%;
+    height: 40px;
+    vertical-align: middle;
+    display: inline-block;
+
+    * {
+        margin-top: 0;
+        margin-bottom: 0;
+        margin-left: 1em;
+        margin-right: 1em;
+        line-height: 40px;
+    }
+
+    button {
+        background-color: var(--colour-secondary);
+        border: black;
+        color: white;
+        padding: 0 32px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 0;
+    }
+}
+
+table#gamePlayers tbody tr[own] {
+    color: var(--colour-primary);
+    font-weight: bold;
+}
+
+table#games,
+table#players {
+    position: relative;
+    display: inline-block;
+    min-height: 100px;
+    max-height: 25vh;
+    overflow-y: scroll;
+
+    thead tr {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+}
+
+div#kda {
+    display: flex;
+    justify-content: space-evenly;
+    text-align: center;
+    font-size: large;
+    font-weight: bold;
+}
+
+dialog#gameDetails,
+dialog#playerDetails {
+    width: 90%;
+}
+
+dialog#gameDetails ol[events] {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+button#fileButton {
+    background-color: var(--colour-primary);
+    border: black;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    width: 100%;
+}
+
+td.timeline-cell {
+    border-left: 1px solid #dddddd;
+}
+
+.me {
+    fill: var(--colour-secondary);
+}
+
+.myTeam {
+    fill: var(--colour-primary);
+}
+
+#title-container {
+    margin: 1em;
+    float: left;
+}
+
+#legend-container {
+    margin: 1em;
+    float: right;
+}

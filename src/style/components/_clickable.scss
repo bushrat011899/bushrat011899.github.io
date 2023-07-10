@@ -1,0 +1,19 @@
+[clickable] {
+    position: relative;
+    cursor: pointer;
+}
+
+[clickable]:after {
+    position: absolute;
+    content: '';
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--colour-secondary);
+    opacity: 0;
+}
+
+[clickable]:hover:after {
+    opacity: 0.3;
+}
