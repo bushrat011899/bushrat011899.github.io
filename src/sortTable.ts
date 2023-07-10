@@ -2,15 +2,12 @@
  * Sorts a table based on the provided header cell element.
  * @param {HTMLTableCellElement} headerElement 
  */
-export function sortTable(headerElement) {
-    /** @type {HTMLTableRowElement} */
-    const headerRow = headerElement.parentElement;
+export function sortTable(headerElement: HTMLTableCellElement) {
+    const headerRow = headerElement.parentElement as HTMLTableRowElement;
     
-    /** @type {HTMLTableSectionElement} */
-    const tableHeader = headerRow.parentElement;
+    const tableHeader = headerRow.parentElement as HTMLTableSectionElement;
 
-    /** @type {HTMLTableElement} */
-    const table = tableHeader.parentElement;
+    const table = tableHeader.parentElement as HTMLTableElement;
 
     const column = Array.from(headerRow.children).indexOf(headerElement);
 
@@ -32,8 +29,8 @@ export function sortTable(headerElement) {
             const x = rows[i].getElementsByTagName("td")[column];
             const y = rows[i + 1].getElementsByTagName("td")[column];
 
-            const xSort = x.sortProperty ?? x.textContent.toLowerCase();
-            const ySort = y.sortProperty ?? y.textContent.toLowerCase();
+            const xSort = (x as any).sortProperty ?? x.textContent.toLowerCase();
+            const ySort = (y as any).sortProperty ?? y.textContent.toLowerCase();
 
             if (ascending ? xSort > ySort : xSort < ySort) {
                 shouldSwitch = true;

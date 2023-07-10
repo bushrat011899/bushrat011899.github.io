@@ -2,7 +2,7 @@
  * Prompts the user to download a `File` object.
  * @param {File} file object to download.
  */
-export function downloadFile(file) {
+export function downloadFile(file: File): void {
     const url = URL.createObjectURL(file);
 
     const downloadButton = document.createElement("a");

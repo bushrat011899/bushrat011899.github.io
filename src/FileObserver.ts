@@ -1,14 +1,16 @@
+type FileSystemHandle = any;
+
 export class FileObserver extends EventTarget {
-    #handle;
+    #handle: FileSystemHandle;
     #lastModified = 0;
     #watchInterval = 5000;
-    #intervalPointer = null;
+    #intervalPointer: NodeJS.Timer = null;
 
     get ready() { return this.#handle != null; }
 
-    async openPicker(pickerOptions) {
+    async openPicker(pickerOptions?: any) {
         try {
-            const [fileHandle] = await window.showOpenFilePicker(pickerOptions);
+            const [fileHandle] = await (window as any).showOpenFilePicker(pickerOptions);
         
             this.#handle = fileHandle;
         } catch(e) {
@@ -20,7 +22,7 @@ Alternatively, you can copy & paste your file into a different folder (e.g., 'Do
         }
     }
 
-    async getFile(pickerOptions) {
+    async getFile(pickerOptions?: any) {
         if (!this.ready) await this.openPicker(pickerOptions);
 
         /** @type {File} */
@@ -52,7 +54,7 @@ Alternatively, you can copy & paste your file into a different folder (e.g., 'Do
         this.#intervalPointer = null;
     }
 
-    constructor(options) {
+    constructor(options?: { watchInterval?: number; }) {
         super();
 
         this.#watchInterval = options?.watchInterval ?? this.#watchInterval;

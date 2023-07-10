@@ -5,7 +5,7 @@ export class DB {
     static #DB_NAME = "HuntShowStats";
     static #CURRENT_VERSION = 1;
     static #MIGRATIONS = {
-        0: (/** @type {IDBDatabase} */ db) => {
+        0: (db: IDBDatabase) => {
             console.trace("Applying Migration 0: DB Initialisation");
     
             const game = db.createObjectStore("game", { keyPath: "id" });
@@ -46,8 +46,7 @@ export class DB {
         }
     }
 
-    /** @type {IDBDatabase} */
-    #db = null;
+    #db: IDBDatabase = null;
 
     /**
      * Attempts to open a connection to the database, and stores it within this object.
@@ -76,8 +75,7 @@ export class DB {
             request.onsuccess = (event) => {
                 console.trace("DB Opened", event);
 
-                /** @type {IDBDatabase} */
-                const db = event.target.result;
+                const db: IDBDatabase = (event.target as any).result;
 
                 resolve(db);
             };
@@ -85,12 +83,13 @@ export class DB {
             request.onupgradeneeded = (event) => {
                 console.trace("DB Upgrade Requested", event);
 
-                /** @type {IDBDatabase} */
-                const db = event.target.result;
+                const db: IDBDatabase = (event.target as any).result;
 
                 let currentVersion = event.oldVersion;
                 while (currentVersion != event.newVersion) {
-                    currentVersion = DB.#MIGRATIONS[currentVersion](db);
+                    const migrations = DB.#MIGRATIONS;
+                    const key = currentVersion as keyof typeof migrations;
+                    currentVersion = DB.#MIGRATIONS[key](db);
                 }
 
                 console.trace("DB Migrated");
@@ -103,12 +102,12 @@ export class DB {
      * @param {() => IDBRequest<T>} dbOperation A database operation to perform.
      * @returns {T} The result of the request.
      */
-    static async do(dbOperation) {
+    static async do<T>(dbOperation: () => IDBRequest<T>): Promise<T> {
         return await new Promise((resolve, reject) => {
             const operationResult = dbOperation();
     
             operationResult.onsuccess = (event) => {
-                const result = event.target.result;
+                const result = (event.target as any).result;
                 resolve(result);
             };
     
@@ -126,17 +125,16 @@ export class DB {
      * @param {IDBTransactionOptions | undefined} options Additional options.
      * @returns A collection including the transaction, all object stores requested, and a `Promise` which will resolve when the transaction is completed.
      */
-    transaction(storeNames, mode, options) {
+    transaction(storeNames: Iterable<string>, mode?: IDBTransactionMode, options?: IDBTransactionOptions) {
         const transaction = this.#db.transaction(storeNames, mode, options);
 
-        /** @type {Object.<string, IDBObjectStore>} */
-        const stores = {};
+        const stores: { [key: string]: IDBObjectStore } = {};
 
         for (const storeName of storeNames) {
             stores[storeName] = transaction.objectStore(storeName);
         }
 
-        const completed = new Promise((resolve, reject) => {
+        const completed = new Promise<void>((resolve, reject) => {
             transaction.oncomplete = (event) => {
                 resolve();
             };
@@ -161,7 +159,7 @@ export class DB {
     async export() {
         const { stores, completed } = this.transaction(this.#db.objectStoreNames, "readonly");
 
-        const dump = {};
+        const dump: { [key: string]: any } = {};
     
         for (const storeName in stores) {
             dump[storeName] = await DB.do(() => stores[storeName].getAll());
@@ -176,7 +174,7 @@ export class DB {
      * Import new data into the database.
      * @param {any} dump JS Object representing items to be imported.
      */
-    async import(dump) {
+    async import(dump: { [key: string]: any }) {
         const { stores, completed } = this.transaction(this.#db.objectStoreNames, "readwrite");
 
         for (const storeName in dump) {

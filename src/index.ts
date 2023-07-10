@@ -1,15 +1,16 @@
-import { DB } from "./DB.js";
-import { parseData } from "./attributesFile.js";
-import { FileObserver } from "./FileObserver.js";
-import { downloadFile } from "./downloadFile.js";
-import { sortTable } from "./sortTable.js";
+import { DB } from "./DB";
+import { parseData } from "./attributesFile";
+import { FileObserver } from "./FileObserver";
+import { downloadFile } from "./downloadFile";
+import { sortTable } from "./sortTable";
 import Chart from 'chart.js/auto';
+import './style.css';
 
 const db = new DB();
 
 const fileObserver = new FileObserver();
 
-async function playerRivalry(id) {
+async function playerRivalry(id: string) {
     const { stores, completed } = db.transaction(["event"], "readonly");
     
     const events = await DB.do(() => stores.event.index("profile").getAll(id));
@@ -38,7 +39,7 @@ async function playerRivalry(id) {
     return stats;
 }
 
-async function playerMMRStats(id) {
+async function playerMMRStats(id: string) {
     const { stores, completed } = db.transaction(["playerMMR"], "readonly");
 
     const mmrs = await DB.do(() => stores.playerMMR.index("profile").getAll(id));
@@ -82,7 +83,7 @@ async function updateTableOfGames() {
         tableBody.append(row);
 
         const dateEntry = document.createElement("td");
-        dateEntry.sortProperty = game.date;
+        (dateEntry as any).sortProperty = game.date;
         const dateTimeEntry = document.createElement("time");
         dateTimeEntry.textContent = new Date(game.date).toLocaleString();
         dateTimeEntry.setAttribute("datetime", game.date)
@@ -92,8 +93,8 @@ async function updateTableOfGames() {
         const playerCount = await DB.do(() => stores.teamMember.index("game").count(game.id));
 
         const playerCountEntry = document.createElement("td");
-        playerCountEntry.textContent = playerCount;
-        playerCountEntry.sortProperty = Number.parseInt(playerCount);
+        playerCountEntry.textContent = playerCount.toString();
+        (playerCountEntry as any).sortProperty = playerCount;
         row.append(playerCountEntry);
 
         row.toggleAttribute("clickable", true);
@@ -106,8 +107,8 @@ async function updateTableOfGames() {
     await completed;
 }
 
-async function showGameDetails(gameId) {
-    const gameDetails = document.querySelector("dialog#gameDetails");
+async function showGameDetails(gameId: string) {
+    const gameDetails: HTMLDialogElement = document.querySelector("dialog#gameDetails");
     const tableBody = gameDetails.querySelector("table#gamePlayers > tbody");
 
     while (tableBody.firstChild) {
@@ -124,8 +125,8 @@ async function showGameDetails(gameId) {
 
     gameDetails.querySelector("em").textContent = gameDate.toLocaleString();
 
-    const playerNameMapping = {};
-    let spannedRows = {};
+    const playerNameMapping: any = {};
+    let spannedRows: any = {};
 
     for (const teamMember of teamMembers) {
         const teamSize = await DB.do(() => stores.teamMember.index("game_number").count([gameId, teamMember.number]));
@@ -138,7 +139,7 @@ async function showGameDetails(gameId) {
 
         if (!spannedRows[teamMember.number]) {
             const teamEntry = document.createElement("td");
-            teamEntry.setAttribute("rowspan", teamSize);
+            teamEntry.setAttribute("rowspan", teamSize.toString());
             teamEntry.textContent = teamMember.number;
             row.append(teamEntry);
             spannedRows[teamMember.number] = true;
@@ -201,7 +202,7 @@ async function showGameDetails(gameId) {
             "killedteammate": "Killed Teammate"
         };
 
-        const category = categoryMap[event.category] ?? event.category;
+        const category = categoryMap[event.category as keyof typeof categoryMap] ?? event.category;
 
         const labelMap = {
             "@ui_mmr_killed_hunter ~~@ui_team_details_killed": "Was Killed By Me",
@@ -219,7 +220,7 @@ async function showGameDetails(gameId) {
             "@ui_team_details_extracted_bounty": "Extracted With Bounty",
         };
 
-        const label = labelMap[event.label] ?? event.label;
+        const label = labelMap[event.label as keyof typeof labelMap] ?? event.label;
 
         const clockEntry = document.createElement("b");
         entry.append(clockEntry);
@@ -272,7 +273,7 @@ async function updateTableOfPlayers() {
         })();
         
         nameEntry.textContent = playerNames[0].name;
-        nameEntry.sortProperty = playerNames[0].name.toLowerCase();
+        (nameEntry as any).sortProperty = playerNames[0].name.toLowerCase();
 
         const playerMMRs = await DB.do(() => stores.playerMMR.index("profile").getAll(profile.id));
 
@@ -286,7 +287,7 @@ async function updateTableOfPlayers() {
         })();
         
         MMREntry.textContent = playerMMRs[0].mmr;
-        MMREntry.sortProperty = Number.parseInt(playerMMRs[0].mmr);
+        (MMREntry as any).sortProperty = Number.parseInt(playerMMRs[0].mmr);
 
         const playedGames = await DB.do(() => stores.teamMember.index("profile").count(profile.id));
 
@@ -318,8 +319,8 @@ async function updateTableOfPlayers() {
             return playedGamesEntry;
         })();
         
-        playedGamesEntry.textContent = playedGames;
-        playedGamesEntry.sortProperty = playedGames;
+        playedGamesEntry.textContent = playedGames.toString();
+        (playedGamesEntry as any).sortProperty = playedGames;
 
         row.toggleAttribute("clickable", true);
 
@@ -336,20 +337,20 @@ async function updateTableOfPlayers() {
         const row = tableBody.querySelector(`tr[profile="${profile.id}"]`);
     
         const killsEntry = row.querySelector("td[kills]");
-        killsEntry.textContent = rivalry.kills;
-        killsEntry.sortProperty = rivalry.kills;
+        killsEntry.textContent = rivalry.kills.toString();
+        (killsEntry as any).sortProperty = rivalry.kills;
 
         const deathsEntry = row.querySelector("td[deaths]");
-        deathsEntry.textContent = rivalry.deaths;
-        deathsEntry.sortProperty = rivalry.deaths;
+        deathsEntry.textContent = rivalry.deaths.toString();
+        (deathsEntry as any).sortProperty = rivalry.deaths;
 
         const assistsEntry = row.querySelector("td[assists]");
-        assistsEntry.textContent = rivalry.assists;
-        assistsEntry.sortProperty = rivalry.assists;
+        assistsEntry.textContent = rivalry.assists.toString();
+        (assistsEntry as any).sortProperty = rivalry.assists;
     }
 }
 
-async function showPlayerDetails(playerId) {
+async function showPlayerDetails(playerId: string) {
     const { stores, completed } = db.transaction(["playerMMR", "playerName"], "readonly");
 
     const playerNames = await DB.do(() => stores.playerName.index("profile").getAll(playerId));
@@ -358,12 +359,12 @@ async function showPlayerDetails(playerId) {
 
     await completed;
     
-    const gameDetails = document.querySelector("dialog#playerDetails");
+    const gameDetails = document.querySelector<HTMLDialogElement>("dialog#playerDetails");
     const mmrChartArea = gameDetails.querySelector("div#chartArea");
 
     playerNames.sort((a, b) => b.date - a.date);
 
-    const playerNameElement = gameDetails.querySelector("a[name]");
+    const playerNameElement = gameDetails.querySelector<HTMLAnchorElement>("a[name]");
     playerNameElement.textContent = playerNames[0].name;
     playerNameElement.href = `https://www.steamidfinder.com/lookup/${playerNames[0].name}/`;
     playerNameElement.target = "_blank";
@@ -413,21 +414,21 @@ async function showPlayerDetails(playerId) {
     
     const mmrStats = await playerMMRStats(playerId);
 
-    gameDetails.querySelector("span[mmrAverage]").textContent = Math.floor(mmrStats.mean);
-    gameDetails.querySelector("span[mmrStd]").textContent = Math.floor(mmrStats.std);
+    gameDetails.querySelector("span[mmrAverage]").textContent = Math.floor(mmrStats.mean).toString();
+    gameDetails.querySelector("span[mmrStd]").textContent = Math.floor(mmrStats.std).toString();
 
     const rivalry = await playerRivalry(playerId);
 
-    gameDetails.querySelector("span[kills]").textContent = rivalry.kills;
-    gameDetails.querySelector("span[deaths]").textContent = rivalry.deaths;
-    gameDetails.querySelector("span[assists]").textContent = rivalry.assists;
-    gameDetails.querySelector("span[collateral]").textContent = rivalry.collateral;
+    gameDetails.querySelector("span[kills]").textContent = rivalry.kills.toString();
+    gameDetails.querySelector("span[deaths]").textContent = rivalry.deaths.toString();
+    gameDetails.querySelector("span[assists]").textContent = rivalry.assists.toString();
+    gameDetails.querySelector("span[collateral]").textContent = rivalry.collateral.toString();
 
     gameDetails.showModal();
 }
 
 async function updateStorageEstimate() {
-    function bytesToMegaBytes(xB) {
+    function bytesToMegaBytes(xB: number) {
         return xB / 1024 / 1024;
     }
 
@@ -450,26 +451,30 @@ async function updateUI() {
 }
 
 async function main() {
-    window.getFile = () => fileObserver.getFile({
-        types: [
-            {
-                description: "Hunt Showdown Attributes",
-                accept: {
-                    "text/xml": [".xml"],
+    (window as any).getFile = async () => {
+        await fileObserver.getFile({
+            types: [
+                {
+                    description: "Hunt Showdown Attributes",
+                    accept: {
+                        "text/xml": [".xml"],
+                    },
                 },
-            },
-        ],
-        excludeAcceptAllOption: true,
-        multiple: false,
-    });
+            ],
+            excludeAcceptAllOption: true,
+            multiple: false,
+        });
+
+        document.querySelector("button#fileButton").toggleAttribute("hidden", true);
+    };
     
-    window.importDB = async () => {
-        const fileInput = document.querySelector("footer input#import");
+    (window as any).importDB = async () => {
+        const fileInput = document.querySelector<HTMLInputElement>("footer input#import");
     
         fileInput.click();
     
         let interval;
-        await new Promise((resolve) => {
+        await new Promise<void>((resolve) => {
             interval = setInterval(() => {
                 if (fileInput.files[0]) resolve()
             }, 100);
@@ -485,7 +490,7 @@ async function main() {
         await updateUI();
     };
     
-    window.exportDB = async () => {
+    (window as any).exportDB = async () => {
         const dump = await db.export();
     
         const textDump = JSON.stringify(dump, null, 2);
@@ -498,8 +503,7 @@ async function main() {
     };
     
     fileObserver.addEventListener("change", async (event) => {
-        /** @type {File} */
-        const file = event.detail;
+        const file: File = (event as any).detail;
     
         const text = await file.text();
     
@@ -514,7 +518,7 @@ async function main() {
         await updateUI();
     });
     
-    for (const cell of document.querySelectorAll("table thead tr th[sortable]")) {
+    for (const cell of document.querySelectorAll<HTMLTableCellElement>("table thead tr th[sortable]")) {
         cell.addEventListener("click", () => {
             sortTable(cell);
         });
@@ -525,4 +529,4 @@ async function main() {
     await updateUI();
 }
 
-await main();
+main();

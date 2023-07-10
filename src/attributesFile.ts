@@ -3,19 +3,19 @@
  * @param {Document} doc XML document to parse.
  * @return A DB dump object ready for import.
  */
-export async function parseData(doc) {
+export async function parseData(doc: Document) {
     const numTeamsEntry = doc.querySelector(`Attr[name="MissionBagNumTeams"]`);
-    const numTeams = Number.parseInt(numTeamsEntry.attributes.value.value);
+    const numTeams = Number.parseInt(numTeamsEntry.attributes.getNamedItem("value").value);
 
-    const teams = {};
+    const teams: any = {};
 
     const teamEntries = doc.querySelectorAll(`Attr[name^="MissionBagTeam_"]`);
     for (const teamEntry of teamEntries) {
-        const [_, team, entry] = teamEntry.attributes.name.value.split("_");
-        const value = teamEntry.attributes.value.value;
+        const [_, team, entry] = teamEntry.attributes.getNamedItem("name").value.split("_");
+        const value = teamEntry.attributes.getNamedItem("value").value;
 
         if (entry == null) continue;
-        if (team >= numTeams) continue;
+        if (Number.parseInt(team) >= numTeams) continue;
 
         teams[team] ??= {
             members: {}
@@ -26,12 +26,12 @@ export async function parseData(doc) {
 
     const playerEntries = doc.querySelectorAll(`Attr[name^="MissionBagPlayer_"]`);
     for (const playerEntry of playerEntries) {
-        const [_, team, player, ...rest] = playerEntry.attributes.name.value.split("_");
+        const [_, team, player, ...rest] = playerEntry.attributes.getNamedItem("name").value.split("_");
         const entry = rest.join("_");
-        const value = playerEntry.attributes.value.value;
+        const value = playerEntry.attributes.getNamedItem("value").value;
 
         if (entry == null) continue;
-        if (team >= numTeams) continue;
+        if (Number.parseInt(team) >= numTeams) continue;
         if (player >= teams[team]["numplayers"]) continue;
 
         teams[team].members[player] ??= {};
@@ -40,26 +40,19 @@ export async function parseData(doc) {
 
     const gameId = await gameHash(teams);
 
-    /** @type {{ id: string; date: number }[]} */
-    const gameStore = [];
+    const gameStore: { id: string; date: number }[] = [];
 
-    /** @type {{ game: string; number: string; mmr: string; own: boolean; date: number }[]} */
-    const teamStore = [];
+    const teamStore: { game: string; number: string; mmr: string; own: boolean; date: number }[] = [];
 
-    /** @type {{ game: string; number: string; profile: string; date: number }[]} */
-    const teamMemberStore = [];
+    const teamMemberStore: { game: string; number: string; profile: string; date: number }[] = [];
 
-    /** @type {{ profile: string; name: string; date: number }[]} */
-    const profileStore = [];
+    const profileStore: { id: string; date: number }[] = [];
 
-    /** @type {{ id: string; date: number }[]} */
-    const playerNameStore = [];
+    const playerNameStore: { profile: string; name: string; date: number }[] = [];
 
-    /** @type {{ game: string; profile: string; mmr: string; date: number }[]} */
-    const playerMMRStore = [];
+    const playerMMRStore: { game: string; profile: string; mmr: string; date: number }[] = [];
 
-    /** @type {{ game: string; profile: string; category: string; label: string; clock: number; date: number }[]} */
-    const eventStore = [];
+    const eventStore: { game: string; profile: string; category: string; label: string; clock: number; date: number }[] = [];
 
     const db = {
         game: gameStore,
@@ -145,7 +138,7 @@ export async function parseData(doc) {
     return db;
 }
 
-async function gameHash(teams) {
+async function gameHash(teams: any) {
     // Consider a game unique by its player composition and MMRs.
     let data = "";
 
