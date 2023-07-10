@@ -127,6 +127,10 @@ async function showGameDetails(gameId: string) {
     const playerNameMapping: any = {};
     let spannedRows: any = {};
 
+
+    const mmrChartArea = gameDetails.querySelector("div[mmr-chart]")
+    const players = [];
+    
     for (const teamMember of teamMembers) {
         const teamSize = await DB.do(() => stores.teamMember.index("game_number").count([gameId, teamMember.number]));
         const team = await DB.do(() => stores.team.get([gameId, teamMember.number]));
@@ -165,7 +169,26 @@ async function showGameDetails(gameId: string) {
         row.addEventListener("click", () => {
             showPlayerDetails(teamMember.profile);
         });
+
+        const playerMMRs: { date: number; mmr: number }[] = await DB.do(() => stores.playerMMR.index("profile").getAll(teamMember.profile));
+        playerMMRs.sort((a, b) => b.date - a.date);
+
+        players.push({
+            name: playerNames[0].name,
+            data: [...playerMMRs.map(entry => ({
+                x: entry.date,
+                y: entry.mmr
+            }))],
+        });
     }
+
+    const chart = mmrChart(players, game.date);
+
+    while (mmrChartArea.firstChild) {
+        mmrChartArea.removeChild(mmrChartArea.lastChild);
+    }
+
+    mmrChartArea.append(chart);
 
     const events = await DB.do(() => stores.event.index("game").getAll(gameId));
 
@@ -370,7 +393,6 @@ async function showPlayerDetails(playerId: string) {
 
     gameDetails.querySelector("span[profile]").textContent = playerId;
 
-
     playerMMRs.sort((a, b) => a.date - b.date);
 
     const players = [{
@@ -382,8 +404,6 @@ async function showPlayerDetails(playerId: string) {
     }];
 
     const chart = mmrChart(players);
-
-    chart.id = "mmrChart";
 
     while (mmrChartArea.firstChild) {
         mmrChartArea.removeChild(mmrChartArea.lastChild);
