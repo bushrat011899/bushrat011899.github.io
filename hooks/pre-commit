@@ -1,16 +1,15 @@
 #!/bin/sh
 
-if command -v npm &> /dev/null
-then
+{
     npm install
     npm run build
-elif command -v npm.cmd &> /dev/null
-then
+} || {
     npm.cmd install
     npm.cmd run build
-else
-    echo "Could not locate NPM. Aborting Commit."
+} || {
+    echo "Could not run NPM. Aborting Commit."
     exit
-fi
+}
 
 git add dist
+git add index.html
