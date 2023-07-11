@@ -1,19 +1,16 @@
 #!/bin/sh
 
-unameOut="$(uname -s)"
-case "${unameOut}" in
-    CYGWIN*)    nix=false;;
-    MINGW*)     nix=false;;
-    MSYS_NT*)   nix=false;;
-    *)          nix=true
-esac
-
-if [ "$nix" = false ] ; then
+if command -v npm &> /dev/null
+then
+    npm install
+    npm run build
+elif command -v npm.cmd &> /dev/null
+then
     npm.cmd install
     npm.cmd run build
 else
-    npm install
-    npm run build
+    echo "Could not locate NPM. Aborting Commit."
+    exit
 fi
 
 git add dist
