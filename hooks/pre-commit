@@ -1,0 +1,19 @@
+#!/bin/sh
+
+unameOut="$(uname -s)"
+case "${unameOut}" in
+    CYGWIN*)    nix=false;;
+    MINGW*)     nix=false;;
+    MSYS_NT*)   nix=false;;
+    *)          nix=true
+esac
+
+if [ "$nix" = false ] ; then
+    npm.cmd install
+    npm.cmd run build
+else
+    npm install
+    npm run build
+fi
+
+git add dist
