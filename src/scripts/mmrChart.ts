@@ -1,7 +1,4 @@
-import { Chart, LinearScale, LineController, PointElement, LineElement, plugins } from 'chart.js';
-import annotationPlugin from 'chartjs-plugin-annotation';
-
-Chart.register(LinearScale, LineController, PointElement, LineElement, plugins.Tooltip, plugins.Colors, plugins.Legend, annotationPlugin);
+import { getChart } from './chartLibrary';
 
 const MMR_THRESHOLD = [
     2000,
@@ -16,7 +13,7 @@ type PlayerMMRData = {
     data: { x: number, y: number }[]
 }
 
-export function mmrChart(players: PlayerMMRData[], date?: number) {
+export async function mmrChart(players: PlayerMMRData[], date?: number) {
     const chart = document.createElement("canvas");
 
     const datasets = [];
@@ -71,6 +68,8 @@ export function mmrChart(players: PlayerMMRData[], date?: number) {
             borderWidth: 0.5,
         }
     } 
+
+    const Chart = await getChart();
 
     new Chart(chart, {
         type: 'line',

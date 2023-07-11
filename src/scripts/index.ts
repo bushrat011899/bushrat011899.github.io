@@ -182,7 +182,7 @@ async function showGameDetails(gameId: string) {
         });
     }
 
-    const chart = mmrChart(players, game.date);
+    const chart = await mmrChart(players, game.date);
 
     while (mmrChartArea.firstChild) {
         mmrChartArea.removeChild(mmrChartArea.lastChild);
@@ -405,7 +405,7 @@ async function showPlayerDetails(playerId: string) {
         }))],
     }];
 
-    const chart = mmrChart(players);
+    const chart = await mmrChart(players);
 
     while (mmrChartArea.firstChild) {
         mmrChartArea.removeChild(mmrChartArea.lastChild);
