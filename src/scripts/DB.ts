@@ -1,3 +1,70 @@
+export type GameId = string;
+
+export type GameEntry = {
+    id: GameId;
+    date: number;
+};
+
+export type ProfileId = string;
+
+export type ProfileEntry = {
+    id: ProfileId;
+    date: number;
+}
+
+export type TeamId = string;
+
+export type TeamEntry = {
+    game: GameId;
+    number: TeamId;
+    mmr: string;
+    own: boolean;
+    date: number;
+}
+
+export type TeamMemberEntry = {
+    game: GameId;
+    number: TeamId;
+    profile: ProfileId;
+    date: number;
+}
+
+export type PlayerNameEntry = {
+    profile: ProfileId;
+    name: string;
+    date: number;
+}
+
+export type PlayerMMREntry = {
+    game: GameId;
+    profile: ProfileId;
+    mmr: string;
+    date: number;
+}
+
+export type EventEntry = {
+    game: GameId;
+    profile: ProfileId;
+    category: string;
+    label: string;
+    clock: number;
+    date: number;
+}
+
+export type DBDump = {
+    game: GameEntry[];
+    team: TeamEntry[];
+    teamMember: TeamMemberEntry[];
+    profile: ProfileEntry[];
+    playerName: PlayerNameEntry[];
+    playerMMR: PlayerMMREntry[];
+    event: EventEntry[];
+}
+
+export type DBStores = {
+    [key in keyof DBDump]: IDBObjectStore;
+}
+
 /**
  * Encapsulated IndexedDB Database which maps common operations to a `Promise`.
  */
@@ -52,7 +119,7 @@ export class DB {
      * Attempts to open a connection to the database, and stores it within this object.
      * @returns {Promise<void>}
      */
-    async open() {
+    async open(): Promise<void> {
         if (this.#db != null) return;
 
         const persist = await navigator.storage.persist();
@@ -125,14 +192,18 @@ export class DB {
      * @param {IDBTransactionOptions | undefined} options Additional options.
      * @returns A collection including the transaction, all object stores requested, and a `Promise` which will resolve when the transaction is completed.
      */
-    transaction(storeNames: Iterable<string>, mode?: IDBTransactionMode, options?: IDBTransactionOptions) {
+    transaction<K extends keyof DBDump>(storeNames: Iterable<K>, mode?: IDBTransactionMode, options?: IDBTransactionOptions) {
         const transaction = this.#db.transaction(storeNames, mode, options);
 
-        const stores: { [key: string]: IDBObjectStore } = {};
+        const partialStores: Partial<{
+            [key in K]: IDBObjectStore;
+        }> = {};
 
         for (const storeName of storeNames) {
-            stores[storeName] = transaction.objectStore(storeName);
+            partialStores[storeName] = transaction.objectStore(storeName);
         }
+
+        const stores = partialStores as { [key in K]: IDBObjectStore; }
 
         const completed = new Promise<void>((resolve, reject) => {
             transaction.oncomplete = (event) => {
@@ -154,32 +225,34 @@ export class DB {
 
     /**
      * Export the entire database.
-     * @returns {any} JS Object representing items to be imported.
+     * @returns {DBDump} JS Object representing items to be imported.
      */
-    async export() {
-        const { stores, completed } = this.transaction(this.#db.objectStoreNames, "readonly");
+    async export(): Promise<DBDump> {
+        const { stores, completed } = this.transaction(this.#db.objectStoreNames as any, "readonly");
 
-        const dump: { [key: string]: any } = {};
+        const dump: Partial<DBDump> = {};
     
         for (const storeName in stores) {
-            dump[storeName] = await DB.do(() => stores[storeName].getAll());
+            const name: keyof DBDump = storeName as any;
+            dump[name] = await DB.do(() => stores[name].getAll());
         }
     
         await completed;
     
-        return dump;
+        return dump as DBDump;
     }
 
     /**
      * Import new data into the database.
-     * @param {any} dump JS Object representing items to be imported.
+     * @param {Partial<DBDump>} dump JS Object representing items to be imported.
      */
-    async import(dump: { [key: string]: any }) {
-        const { stores, completed } = this.transaction(this.#db.objectStoreNames, "readwrite");
+    async import(dump: Partial<DBDump>) {
+        const { stores, completed } = this.transaction(this.#db.objectStoreNames as any, "readwrite");
 
         for (const storeName in dump) {
-            for (const entry of dump[storeName]) {
-                await DB.do(() => stores[storeName].put(entry));
+            const name: keyof DBDump = storeName as any;
+            for (const entry of dump[name]) {
+                await DB.do(() => stores[name].put(entry));
             }
         }
 

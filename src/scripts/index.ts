@@ -1,4 +1,4 @@
-import { DB } from "./DB";
+import { DB, EventEntry, GameEntry, PlayerMMREntry, PlayerNameEntry, ProfileEntry, TeamEntry, TeamMemberEntry } from "./DB";
 import { parseData } from "./attributesFile";
 import { FileObserver } from "./FileObserver";
 import { downloadFile } from "./downloadFile";
@@ -12,7 +12,7 @@ const fileObserver = new FileObserver();
 async function playerRivalry(id: string) {
     const { stores, completed } = db.transaction(["event"], "readonly");
     
-    const events = await DB.do(() => stores.event.index("profile").getAll(id));
+    const events: EventEntry[] = await DB.do(() => stores.event.index("profile").getAll(id));
 
     await completed;
 
@@ -41,11 +41,10 @@ async function playerRivalry(id: string) {
 async function playerMMRStats(id: string) {
     const { stores, completed } = db.transaction(["playerMMR"], "readonly");
 
-    const mmrs = await DB.do(() => stores.playerMMR.index("profile").getAll(id));
+    const mmrs: PlayerMMREntry[] = await DB.do(() => stores.playerMMR.index("profile").getAll(id));
 
     await completed;
 
-    /** @type {number} */
     const count = mmrs.length;
 
     const sum1 = mmrs.reduce((s, entry) => s + Number.parseInt(entry.mmr), 0);
@@ -68,7 +67,7 @@ async function playerMMRStats(id: string) {
 async function updateTableOfGames() {
     const { stores, completed } = db.transaction(["game", "teamMember"], "readonly");
 
-    const games = await DB.do(() => stores.game.index("date").getAll());
+    const games: GameEntry[] = await DB.do(() => stores.game.index("date").getAll());
 
     const tableBody = document.querySelector("table#games > tbody");
 
@@ -85,7 +84,7 @@ async function updateTableOfGames() {
         (dateEntry as any).sortProperty = game.date;
         const dateTimeEntry = document.createElement("time");
         dateTimeEntry.textContent = new Date(game.date).toLocaleString();
-        dateTimeEntry.setAttribute("datetime", game.date)
+        dateTimeEntry.setAttribute("datetime", game.date.toString())
         dateEntry.append(dateTimeEntry);
         row.append(dateEntry);
 
@@ -104,6 +103,8 @@ async function updateTableOfGames() {
     }
 
     await completed;
+
+    tableBody.toggleAttribute("hidden", false);
 }
 
 async function showGameDetails(gameId: string) {
@@ -116,24 +117,23 @@ async function showGameDetails(gameId: string) {
 
     const { stores, completed } = db.transaction(["game", "teamMember", "playerName", "playerMMR", "event", "team"], "readonly");
 
-    const game = await DB.do(() => stores.game.get(gameId));
+    const game: GameEntry = await DB.do(() => stores.game.get(gameId));
 
     const gameDate = new Date(game.date);
 
-    const teamMembers = await DB.do(() => stores.teamMember.index("game").getAll(gameId));
+    const teamMembers: TeamMemberEntry[] = await DB.do(() => stores.teamMember.index("game").getAll(gameId));
 
     gameDetails.querySelector("em").textContent = gameDate.toLocaleString();
 
     const playerNameMapping: any = {};
     let spannedRows: any = {};
 
-
     const mmrChartArea = gameDetails.querySelector("div[mmr-chart]")
     const players = [];
     
     for (const teamMember of teamMembers) {
         const teamSize = await DB.do(() => stores.teamMember.index("game_number").count([gameId, teamMember.number]));
-        const team = await DB.do(() => stores.team.get([gameId, teamMember.number]));
+        const team: TeamEntry = await DB.do(() => stores.team.get([gameId, teamMember.number]));
 
         const row = document.createElement("tr");
         row.setAttribute("player", teamMember.profile);
@@ -148,7 +148,7 @@ async function showGameDetails(gameId: string) {
             spannedRows[teamMember.number] = true;
         }
 
-        const playerNames = await DB.do(() => stores.playerName.index("profile").getAll(teamMember.profile));
+        const playerNames: PlayerNameEntry[] = await DB.do(() => stores.playerName.index("profile").getAll(teamMember.profile));
 
         playerNames.sort((a, b) => b.date - a.date);
 
@@ -158,7 +158,7 @@ async function showGameDetails(gameId: string) {
         nameEntry.textContent = playerNameMapping[teamMember.profile];
         row.append(nameEntry);
 
-        const playerMMR = await DB.do(() => stores.playerMMR.get([gameId, teamMember.profile]));
+        const playerMMR: PlayerMMREntry = await DB.do(() => stores.playerMMR.get([gameId, teamMember.profile]));
 
         const MMREntry = document.createElement("td");
         MMREntry.textContent = playerMMR.mmr;
@@ -170,14 +170,14 @@ async function showGameDetails(gameId: string) {
             showPlayerDetails(teamMember.profile);
         });
 
-        const playerMMRs: { date: number; mmr: number }[] = await DB.do(() => stores.playerMMR.index("profile").getAll(teamMember.profile));
+        const playerMMRs: PlayerMMREntry[] = await DB.do(() => stores.playerMMR.index("profile").getAll(teamMember.profile));
         playerMMRs.sort((a, b) => b.date - a.date);
 
         players.push({
             name: playerNames[0].name,
             data: [...playerMMRs.map(entry => ({
                 x: entry.date,
-                y: entry.mmr
+                y: Number.parseInt(entry.mmr)
             }))],
         });
     }
@@ -190,7 +190,7 @@ async function showGameDetails(gameId: string) {
 
     mmrChartArea.append(chart);
 
-    const events = await DB.do(() => stores.event.index("game").getAll(gameId));
+    const events: EventEntry[] = await DB.do(() => stores.event.index("game").getAll(gameId));
 
     await completed;
 
@@ -271,7 +271,7 @@ async function showGameDetails(gameId: string) {
 async function updateTableOfPlayers() {
     const { stores, completed } = db.transaction(["profile", "playerName", "playerMMR", "teamMember"], "readonly");
 
-    const profiles = await DB.do(() => stores.profile.getAll());
+    const profiles: ProfileEntry[] = await DB.do(() => stores.profile.getAll());
 
     const tableBody = document.querySelector("table#players > tbody");
 
@@ -283,7 +283,7 @@ async function updateTableOfPlayers() {
             return row;
         })();
 
-        const playerNames = await DB.do(() => stores.playerName.index("profile").getAll(profile.id));
+        const playerNames: PlayerNameEntry[] = await DB.do(() => stores.playerName.index("profile").getAll(profile.id));
 
         playerNames.sort((a, b) => b.date - a.date);
 
@@ -297,7 +297,7 @@ async function updateTableOfPlayers() {
         nameEntry.textContent = playerNames[0].name;
         (nameEntry as any).sortProperty = playerNames[0].name.toLowerCase();
 
-        const playerMMRs = await DB.do(() => stores.playerMMR.index("profile").getAll(profile.id));
+        const playerMMRs: PlayerMMREntry[] = await DB.do(() => stores.playerMMR.index("profile").getAll(profile.id));
 
         playerMMRs.sort((a, b) => b.date - a.date);
 
@@ -370,14 +370,16 @@ async function updateTableOfPlayers() {
         assistsEntry.textContent = rivalry.assists.toString();
         (assistsEntry as any).sortProperty = rivalry.assists;
     }
+
+    tableBody.toggleAttribute("hidden", false);
 }
 
 async function showPlayerDetails(playerId: string) {
     const { stores, completed } = db.transaction(["playerMMR", "playerName"], "readonly");
 
-    const playerNames = await DB.do(() => stores.playerName.index("profile").getAll(playerId));
+    const playerNames: PlayerNameEntry[] = await DB.do(() => stores.playerName.index("profile").getAll(playerId));
 
-    const playerMMRs = await DB.do(() => stores.playerMMR.index("profile").getAll(playerId));
+    const playerMMRs: PlayerMMREntry[] = await DB.do(() => stores.playerMMR.index("profile").getAll(playerId));
 
     await completed;
     
@@ -399,7 +401,7 @@ async function showPlayerDetails(playerId: string) {
         name: playerNames[0].name,
         data: [...playerMMRs.map(entry => ({
             x: entry.date,
-            y: entry.mmr
+            y: Number.parseInt(entry.mmr)
         }))],
     }];
 
@@ -427,9 +429,7 @@ async function showPlayerDetails(playerId: string) {
 }
 
 async function updateStorageEstimate() {
-    function bytesToMegaBytes(xB: number) {
-        return xB / 1024 / 1024;
-    }
+    const bytesToMegaBytes = (xB: number) => xB / 1024 / 1024;
 
     const quota = await navigator.storage.estimate();
 

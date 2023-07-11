@@ -5,13 +5,13 @@
 export function downloadFile(file: File): void {
     const url = URL.createObjectURL(file);
 
-    const downloadButton = document.createElement("a");
-    downloadButton.href = url;
-    downloadButton.setAttribute("download", file.name);
+    const button = document.createElement("a");
+    button.href = url;
+    button.setAttribute("download", file.name);
     
-    downloadButton.addEventListener("click", () => setTimeout(() => {
-        downloadButton.remove();
+    button.addEventListener("click", () => setTimeout(() => {
+        button.remove();
     }));
 
-    downloadButton.click();
+    button.click();
 }

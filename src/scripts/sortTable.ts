@@ -3,44 +3,33 @@
  * @param {HTMLTableCellElement} headerElement 
  */
 export function sortTable(headerElement: HTMLTableCellElement) {
-    const headerRow = headerElement.parentElement as HTMLTableRowElement;
-    
-    const tableHeader = headerRow.parentElement as HTMLTableSectionElement;
+    const table = headerElement.closest('table');
 
-    const table = tableHeader.parentElement as HTMLTableElement;
+    sortTableBody(
+        table.getElementsByTagName("tbody")[0],
+        Array.from(headerElement.parentNode.children).indexOf(headerElement),
+        !table.toggleAttribute("ascending")
+    );
+}
 
-    const column = Array.from(headerRow.children).indexOf(headerElement);
+// Based on https://stackoverflow.com/questions/14267781/sorting-html-table-with-javascript
+function sortTableBody(tableBody: HTMLTableSectionElement, column: number, ascending: boolean) {
+    Array.from(tableBody.rows)
+        .sort((a, b) => compare(
+            getCellValue(ascending ? a : b, column),
+            getCellValue(ascending ? b : a, column)
+        ))
+        .forEach(row => tableBody.appendChild(row));
+}
 
-    table.toggleAttribute("ascending");
+function compare(x: number | string, y: number | string) {
+    if (typeof x == "number" && typeof y == "number" && !isNaN(x) && !isNaN(y)) return x - y;
 
-    const ascending = table.hasAttribute("ascending");
+    return x.toString().localeCompare(y.toString());
+}
 
-    let switching = true;
+function getCellValue(row: HTMLTableRowElement, column: number) {
+    const cell = row.children[column];
 
-    while (switching) {
-        let i = 1;
-        switching = false;
-        let shouldSwitch = false;
-        const rows = table.rows;
-
-        for (i = 1; i < (rows.length - 1); i++) {
-            shouldSwitch = false;
-            
-            const x = rows[i].getElementsByTagName("td")[column];
-            const y = rows[i + 1].getElementsByTagName("td")[column];
-
-            const xSort = (x as any).sortProperty ?? x.textContent.toLowerCase();
-            const ySort = (y as any).sortProperty ?? y.textContent.toLowerCase();
-
-            if (ascending ? xSort > ySort : xSort < ySort) {
-                shouldSwitch = true;
-                break;
-            }
-        }
-
-        if (shouldSwitch) {
-            rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-            switching = true;
-        }
-    }
+    return ((c) => (c as any).sortProperty || c.textContent)(cell);
 }

@@ -1,3 +1,7 @@
+import { EventEntry, GameEntry, PlayerMMREntry, PlayerNameEntry, ProfileEntry, TeamEntry, TeamMemberEntry } from "./DB";
+
+const EVENT_LABEL_TIME_REGEX = /(@.*?)~([0-9]{1,2}):([0-9]{2})/g;
+
 /**
  * Parses a Hunt: Showdown `attributes.xml` file into something importable into a DB.
  * @param {Document} doc XML document to parse.
@@ -40,19 +44,19 @@ export async function parseData(doc: Document) {
 
     const gameId = await gameHash(teams);
 
-    const gameStore: { id: string; date: number }[] = [];
+    const gameStore: GameEntry[] = [];
 
-    const teamStore: { game: string; number: string; mmr: string; own: boolean; date: number }[] = [];
+    const teamStore: TeamEntry[] = [];
 
-    const teamMemberStore: { game: string; number: string; profile: string; date: number }[] = [];
+    const teamMemberStore: TeamMemberEntry[] = [];
 
-    const profileStore: { id: string; date: number }[] = [];
+    const profileStore: ProfileEntry[] = [];
 
-    const playerNameStore: { profile: string; name: string; date: number }[] = [];
+    const playerNameStore: PlayerNameEntry[] = [];
 
-    const playerMMRStore: { game: string; profile: string; mmr: string; date: number }[] = [];
+    const playerMMRStore: PlayerMMREntry[] = [];
 
-    const eventStore: { game: string; profile: string; category: string; label: string; clock: number; date: number }[] = [];
+    const eventStore: EventEntry[] = [];
 
     const db = {
         game: gameStore,
@@ -111,13 +115,11 @@ export async function parseData(doc: Document) {
             });
 
             for (const propertyId in player) {
-                const regex = /(@.*?)~([0-9]{1,2}):([0-9]{2})/g;
-
                 if (!propertyId.startsWith("tooltip")) continue;
 
                 const category = propertyId.split("tooltip")[1].replace("_", "");
 
-                const matches = player[propertyId].matchAll(regex);
+                const matches = player[propertyId].matchAll(EVENT_LABEL_TIME_REGEX);
 
                 for (const [match, label, minutes, seconds] of matches) {
                     const clock = Number.parseInt(minutes) * 60 + Number.parseInt(seconds);

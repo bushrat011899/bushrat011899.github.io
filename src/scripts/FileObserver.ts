@@ -25,8 +25,7 @@ Alternatively, you can copy & paste your file into a different folder (e.g., 'Do
     async getFile(pickerOptions?: any) {
         if (!this.ready) await this.openPicker(pickerOptions);
 
-        /** @type {File} */
-        const file = await this.#handle.getFile();
+        const file: File = await this.#handle.getFile();
 
         if (this.#lastModified >= file.lastModified) return;
 

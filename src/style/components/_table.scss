@@ -17,26 +17,14 @@
     thead {
         tr {
             background-color: var(--colour-primary);
-            color: #ffffff;
+            color: var(--colour-text-primary);
             text-align: center;
         }
     }
 
     tbody {
         tr {
-            border-bottom: 1px solid #dddddd;
-        }
-
-        tr.myTeam {
-            font-weight: bold;
-            color: var(--colour-primary);
-            fill: var(--colour-primary);
-
-            th.me {
-                font-weight: bold;
-                color: var(--colour-secondary);
-                fill: var(--colour-secondary);
-            }
+            border-bottom: 1px solid var(--colour-border-background-foreground);
         }
     }
 
