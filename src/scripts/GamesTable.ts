@@ -9,7 +9,7 @@ export class GamesHTMLTableElement extends HTMLTableElement {
 
     connectedCallback() {
         GamesHTMLTableElement.#db.addEventListener("change", async (event: CustomEvent) => {
-            const stores: [keyof DBDump] = event.detail.stores;
+            const stores: [keyof DBDump] = [...event.detail.stores] as any;
 
             if (stores.includes("game") || stores.includes("teamMember")) {
                 await this.update();

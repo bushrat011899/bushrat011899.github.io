@@ -9,7 +9,7 @@ export class PlayersHTMLTableElement extends HTMLTableElement {
 
     connectedCallback() {
         PlayersHTMLTableElement.#db.addEventListener("change", async (event: CustomEvent) => {
-            const stores: [keyof DBDump] = event.detail.stores;
+            const stores: [keyof DBDump] = [...event.detail.stores] as any;
 
             const changed = stores.includes("profile")
                 || stores.includes("playerName")
