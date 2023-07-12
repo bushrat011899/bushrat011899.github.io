@@ -277,13 +277,14 @@ async function showGameDetails(gameId: string) {
             "@ui_team_details_hunter_downed_teammate ~~@ui_team_details_downed": "Downed Teammate",
             "@ui_team_details_downed": "Downed Teammate",
             "@ui_team_details_hunter_downed_you ~~@ui_team_details_downed": "Downed Me",
+            "@ui_team_details_killed_by_team_mate ~~@ui_team_details_downed": "Was Killed By Teammate",
             "@ui_team_details_killed_by_team_mate ~~@ui_team_details_killed": "Was Killed By Teammate",
             "@ui_team_details_killed_team_mate ~~@ui_team_details_downed": "Downed Teammate",
             "@ui_team_details_killed_team_mate ~~@ui_team_details_killed": "Killed Teammate",
             "@ui_team_details_killed": "Killed Teammate",
             "@ui_team_details_teammate_downed_hunter ~~@ui_team_details_downed": "Was Downed By Teammate",
             "@ui_team_details_you_downed_hunter ~~@ui_team_details_downed": "Was Downed By Me",
-            "@ui_team_details_extracted_bounty": "Extracted With Bounty",
+            "@ui_team_details_extracted_bounty": "Extracted With Bounty"
         };
 
         const label = labelMap[event.label as keyof typeof labelMap] ?? event.label;
