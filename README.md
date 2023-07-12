@@ -85,7 +85,7 @@ If you are trying to modify content, you want to be looking in the [source](./sr
 
 ### I'm Worried About Easy Anti Cheat, Is This Cheating?
 
-In my opinion, absolutely not. This application runs exclusively in the browser, and only has read access to a single file, which Hunt typically doesn't even use during gameplay. Below are some other methods which are more invasive which have not been labelled as cheating by EAC:
+In our opinion, absolutely not. This application runs exclusively in the browser, and only has read access to a single file, which Hunt typically doesn't even use during gameplay. Below are some other methods which are more invasive which have not been labelled as cheating by EAC:
 
 * [Hunt Stats](https://huntstats.net/)
 * [Manual Checking](https://steamcommunity.com/sharedfiles/filedetails/?id=2747318131)

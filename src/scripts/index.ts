@@ -2,7 +2,7 @@ import { DB, EventEntry, GameEntry, PlayerMMREntry, PlayerNameEntry, ProfileEntr
 import { parseData } from "./attributesFile";
 import { FileObserver } from "./FileObserver";
 import { downloadFile } from "./downloadFile";
-import { sortTable } from "./sortTable";
+import { SortableHTMLTableCellElement } from "./sortTable";
 import { mmrChart } from "./mmrChart";
 
 const db = new DB();
@@ -485,8 +485,6 @@ export async function main() {
         const dump = JSON.parse(textDump);
     
         await db.import(dump);
-    
-        await updateUI();
     };
     
     (window as any).exportDB = async () => {
@@ -513,15 +511,13 @@ export async function main() {
         const dump = await parseData(doc);
     
         await db.import(dump);
-    
+    });
+
+    db.addEventListener("change", async (event) => {
         await updateUI();
     });
-    
-    for (const cell of document.querySelectorAll<HTMLTableCellElement>("table thead tr th[sortable]")) {
-        cell.addEventListener("click", () => {
-            sortTable(cell);
-        });
-    }
+
+    SortableHTMLTableCellElement.define();
     
     await db.open();
     

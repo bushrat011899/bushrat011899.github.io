@@ -1,19 +1,15 @@
 import { getChart } from './chartLibrary';
 
-const MMR_THRESHOLD = [
-    2000,
-    2300,
-    2600,
-    2750,
-    3000
-];
-
-type PlayerMMRData = {
-    name: string,
-    data: { x: number, y: number }[]
-}
-
-export async function mmrChart(players: PlayerMMRData[], date?: number) {
+/**
+ * Create a chart of 1 or more players' MMRs over time.
+ * @param players Collection of players to plot.
+ * @param date An optional date to highlight.
+ * @returns A new `HTMLCanvasElement` which can be added to the document to render the plot.
+ */
+export async function mmrChart(
+    players: PlayerMMRData[],
+    date?: number
+): Promise<HTMLCanvasElement> {
     const chart = document.createElement("canvas");
 
     const datasets = [];
@@ -87,4 +83,17 @@ export async function mmrChart(players: PlayerMMRData[], date?: number) {
     });
 
     return chart;
+}
+
+const MMR_THRESHOLD = [
+    2000,
+    2300,
+    2600,
+    2750,
+    3000
+];
+
+type PlayerMMRData = {
+    name: string,
+    data: { x: number, y: number }[]
 }

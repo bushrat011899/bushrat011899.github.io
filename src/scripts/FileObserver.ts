@@ -8,7 +8,7 @@ export class FileObserver extends EventTarget {
 
     get ready() { return this.#handle != null; }
 
-    async openPicker(pickerOptions?: any) {
+    async openPicker(pickerOptions?: any): Promise<void> {
         try {
             const [fileHandle] = await (window as any).showOpenFilePicker(pickerOptions);
         
@@ -22,7 +22,7 @@ Alternatively, you can copy & paste your file into a different folder (e.g., 'Do
         }
     }
 
-    async getFile(pickerOptions?: any) {
+    async getFile(pickerOptions?: any): Promise<void> {
         if (!this.ready) await this.openPicker(pickerOptions);
 
         const file: File = await this.#handle.getFile();
@@ -36,7 +36,7 @@ Alternatively, you can copy & paste your file into a different folder (e.g., 'Do
         }));
     }
 
-    start() {
+    start(): void {
         if (this.#intervalPointer != null) return;
 
         this.#intervalPointer = setInterval(() => {
@@ -45,7 +45,7 @@ Alternatively, you can copy & paste your file into a different folder (e.g., 'Do
         }, this.#watchInterval);
     }
 
-    stop() {
+    stop(): void {
         if (this.#intervalPointer == null) return;
 
         clearInterval(this.#intervalPointer);
@@ -53,11 +53,15 @@ Alternatively, you can copy & paste your file into a different folder (e.g., 'Do
         this.#intervalPointer = null;
     }
 
-    constructor(options?: { watchInterval?: number; }) {
+    constructor(options?: Partial<Options>) {
         super();
 
         this.#watchInterval = options?.watchInterval ?? this.#watchInterval;
 
         this.start();
     }
+}
+
+type Options = {
+    watchInterval: number;
 }

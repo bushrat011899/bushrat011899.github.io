@@ -68,7 +68,13 @@ export type DBStores = {
 /**
  * Encapsulated IndexedDB Database which maps common operations to a `Promise`.
  */
-export class DB {
+export class DB extends EventTarget {
+    constructor() {
+        super();
+
+        this.addEventListener("change", (event) => console.log("Database Changed", event));
+    }
+
     static #DB_NAME = "HuntShowStats";
     static #CURRENT_VERSION = 1;
     static #MIGRATIONS = {
@@ -194,6 +200,16 @@ export class DB {
      */
     transaction<K extends keyof DBDump>(storeNames: Iterable<K>, mode?: IDBTransactionMode, options?: IDBTransactionOptions) {
         const transaction = this.#db.transaction(storeNames, mode, options);
+
+        if (mode == "readwrite") {
+            transaction.addEventListener("complete", (event) => {
+                this.dispatchEvent(new CustomEvent("change", {
+                    detail: {
+                        stores: storeNames
+                    }
+                }));
+            });
+        }
 
         const partialStores: Partial<{
             [key in K]: IDBObjectStore;

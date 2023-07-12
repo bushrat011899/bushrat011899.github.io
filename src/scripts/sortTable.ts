@@ -1,8 +1,22 @@
-/**
- * Sorts a table based on the provided header cell element.
- * @param {HTMLTableCellElement} headerElement 
- */
-export function sortTable(headerElement: HTMLTableCellElement) {
+export class SortableHTMLTableCellElement extends HTMLTableCellElement {
+    static define() {
+        customElements.define("hss-table-header-sortable", this, { extends: "th" });
+    }
+
+    constructor() {
+        super();
+    }
+
+    connectedCallback() {
+        this.addEventListener("click", () => this.sort());
+    }
+
+    sort() {
+        sortTable(this);
+    }
+}
+
+function sortTable(headerElement: HTMLTableCellElement): void {
     const table = headerElement.closest('table');
 
     sortTableBody(
