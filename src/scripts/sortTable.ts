@@ -3,27 +3,19 @@ export class SortableHTMLTableCellElement extends HTMLTableCellElement {
         customElements.define("hss-table-header-sortable", this, { extends: "th" });
     }
 
-    constructor() {
-        super();
-    }
-
     connectedCallback() {
         this.addEventListener("click", () => this.sort());
     }
 
     sort() {
-        sortTable(this);
+        const table = this.closest('table');
+
+        sortTableBody(
+            table.getElementsByTagName("tbody")[0],
+            Array.from(this.parentNode.children).indexOf(this),
+            !table.toggleAttribute("ascending")
+        );
     }
-}
-
-function sortTable(headerElement: HTMLTableCellElement): void {
-    const table = headerElement.closest('table');
-
-    sortTableBody(
-        table.getElementsByTagName("tbody")[0],
-        Array.from(headerElement.parentNode.children).indexOf(headerElement),
-        !table.toggleAttribute("ascending")
-    );
 }
 
 // Based on https://stackoverflow.com/questions/14267781/sorting-html-table-with-javascript

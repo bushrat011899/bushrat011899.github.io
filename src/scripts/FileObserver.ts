@@ -1,5 +1,3 @@
-type FileSystemHandle = any;
-
 export class FileObserver extends EventTarget {
     #handle: FileSystemHandle;
     #lastModified = 0;
@@ -65,3 +63,5 @@ Alternatively, you can copy & paste your file into a different folder (e.g., 'Do
 type Options = {
     watchInterval: number;
 }
+
+type FileSystemHandle = any;

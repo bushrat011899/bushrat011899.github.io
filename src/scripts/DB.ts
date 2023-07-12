@@ -1,80 +1,7 @@
-export type GameId = string;
-
-export type GameEntry = {
-    id: GameId;
-    date: number;
-};
-
-export type ProfileId = string;
-
-export type ProfileEntry = {
-    id: ProfileId;
-    date: number;
-}
-
-export type TeamId = string;
-
-export type TeamEntry = {
-    game: GameId;
-    number: TeamId;
-    mmr: string;
-    own: boolean;
-    date: number;
-}
-
-export type TeamMemberEntry = {
-    game: GameId;
-    number: TeamId;
-    profile: ProfileId;
-    date: number;
-}
-
-export type PlayerNameEntry = {
-    profile: ProfileId;
-    name: string;
-    date: number;
-}
-
-export type PlayerMMREntry = {
-    game: GameId;
-    profile: ProfileId;
-    mmr: string;
-    date: number;
-}
-
-export type EventEntry = {
-    game: GameId;
-    profile: ProfileId;
-    category: string;
-    label: string;
-    clock: number;
-    date: number;
-}
-
-export type DBDump = {
-    game: GameEntry[];
-    team: TeamEntry[];
-    teamMember: TeamMemberEntry[];
-    profile: ProfileEntry[];
-    playerName: PlayerNameEntry[];
-    playerMMR: PlayerMMREntry[];
-    event: EventEntry[];
-}
-
-export type DBStores = {
-    [key in keyof DBDump]: IDBObjectStore;
-}
-
 /**
  * Encapsulated IndexedDB Database which maps common operations to a `Promise`.
  */
 export class DB extends EventTarget {
-    constructor() {
-        super();
-
-        this.addEventListener("change", (event) => console.log("Database Changed", event));
-    }
-
     static #DB_NAME = "HuntShowStats";
     static #CURRENT_VERSION = 1;
     static #MIGRATIONS = {
@@ -120,6 +47,9 @@ export class DB extends EventTarget {
     }
 
     #db: IDBDatabase = null;
+    #ready = false;
+
+    get ready() { return this.#ready; }
 
     /**
      * Attempts to open a connection to the database, and stores it within this object.
@@ -168,6 +98,10 @@ export class DB extends EventTarget {
                 console.trace("DB Migrated");
             };
         });
+
+        this.#ready = true;
+
+        this.dispatchEvent(new CustomEvent("ready"));
     }
 
     /**
@@ -274,4 +208,71 @@ export class DB extends EventTarget {
 
         await completed;
     }
+}
+
+export type GameId = string;
+
+export type GameEntry = {
+    id: GameId;
+    date: number;
+};
+
+export type ProfileId = string;
+
+export type ProfileEntry = {
+    id: ProfileId;
+    date: number;
+}
+
+export type TeamId = string;
+
+export type TeamEntry = {
+    game: GameId;
+    number: TeamId;
+    mmr: string;
+    own: boolean;
+    date: number;
+}
+
+export type TeamMemberEntry = {
+    game: GameId;
+    number: TeamId;
+    profile: ProfileId;
+    date: number;
+}
+
+export type PlayerNameEntry = {
+    profile: ProfileId;
+    name: string;
+    date: number;
+}
+
+export type PlayerMMREntry = {
+    game: GameId;
+    profile: ProfileId;
+    mmr: string;
+    date: number;
+}
+
+export type EventEntry = {
+    game: GameId;
+    profile: ProfileId;
+    category: string;
+    label: string;
+    clock: number;
+    date: number;
+}
+
+export type DBDump = {
+    game: GameEntry[];
+    team: TeamEntry[];
+    teamMember: TeamMemberEntry[];
+    profile: ProfileEntry[];
+    playerName: PlayerNameEntry[];
+    playerMMR: PlayerMMREntry[];
+    event: EventEntry[];
+}
+
+export type DBStores = {
+    [key in keyof DBDump]: IDBObjectStore;
 }

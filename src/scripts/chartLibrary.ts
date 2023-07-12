@@ -1,5 +1,4 @@
 import type { Chart } from "chart.js";
-let c: typeof Chart = null;
 
 /**
  * Lazy-loads Chart.js components one first request, and then provides a cached instance of `Chart` from then on.
@@ -17,3 +16,5 @@ export async function getChart(): Promise<typeof Chart> {
 
     return c;
 }
+
+let c: typeof Chart = null;

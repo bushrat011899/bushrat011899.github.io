@@ -4,10 +4,97 @@ import { FileObserver } from "./FileObserver";
 import { downloadFile } from "./downloadFile";
 import { SortableHTMLTableCellElement } from "./sortTable";
 import { mmrChart } from "./mmrChart";
+import { GamesHTMLTableElement } from "./GamesTable";
+import { PlayersHTMLTableElement } from "./PlayersTable";
+import { StorageUseEstimateHTMLSpanElement } from "./StorageUseEstimate";
 
 const db = new DB();
 
 const fileObserver = new FileObserver();
+
+export async function main() {
+    StorageUseEstimateHTMLSpanElement.define();
+    SortableHTMLTableCellElement.define();
+    GamesHTMLTableElement.define(db);
+    PlayersHTMLTableElement.define(db);
+
+    (window as any).getFile = async () => {
+        await fileObserver.getFile({
+            types: [
+                {
+                    description: "Hunt Showdown Attributes",
+                    accept: {
+                        "text/xml": [".xml"],
+                    },
+                },
+            ],
+            excludeAcceptAllOption: true,
+            multiple: false,
+        });
+
+        document.querySelector("button#fileButton").toggleAttribute("hidden", true);
+    };
+    
+    (window as any).importDB = async () => {
+        const fileInput = document.querySelector<HTMLInputElement>("footer input#import");
+    
+        fileInput.click();
+    
+        let interval;
+        await new Promise<void>((resolve) => {
+            interval = setInterval(() => {
+                if (fileInput.files[0]) resolve()
+            }, 100);
+        });
+        clearInterval(interval);
+    
+        const textDump = await fileInput.files[0].text();
+    
+        const dump = JSON.parse(textDump);
+    
+        await db.import(dump);
+    };
+    
+    (window as any).exportDB = async () => {
+        const dump = await db.export();
+    
+        const textDump = JSON.stringify(dump, null, 2);
+    
+        const file = new File([textDump], "export.json", {
+            type: "application/json",
+        });
+    
+        downloadFile(file);
+    };
+    
+    fileObserver.addEventListener("change", async (event) => {
+        const file: File = (event as any).detail;
+    
+        const text = await file.text();
+    
+        const parser = new DOMParser();
+        
+        const doc = parser.parseFromString(text, "application/xml");
+    
+        const dump = await parseData(doc);
+    
+        await db.import(dump);
+    });
+
+    document.getElementById("games").addEventListener("gameChosen", (event: CustomEvent) => {
+        const game: GameEntry = event.detail;
+
+        showGameDetails(game.id);
+    });
+
+    document.getElementById("players").addEventListener("profileChosen", (event: CustomEvent) => {
+        const profile: ProfileEntry = event.detail;
+
+        showPlayerDetails(profile.id);
+    });
+    
+    await db.open();
+}
 
 async function playerRivalry(id: string) {
     const { stores, completed } = db.transaction(["event"], "readonly");
@@ -62,49 +149,6 @@ async function playerMMRStats(id: string) {
     };
 
     return stats;
-}
-
-async function updateTableOfGames() {
-    const { stores, completed } = db.transaction(["game", "teamMember"], "readonly");
-
-    const games: GameEntry[] = await DB.do(() => stores.game.index("date").getAll());
-
-    const tableBody = document.querySelector("table#games > tbody");
-
-    for (const game of games) {
-        let possibleRow = tableBody.querySelector(`tr[game="${game.id}"]`);
-
-        if (possibleRow) continue;
-
-        const row = document.createElement("tr");
-        row.setAttribute("game", game.id);
-        tableBody.append(row);
-
-        const dateEntry = document.createElement("td");
-        (dateEntry as any).sortProperty = game.date;
-        const dateTimeEntry = document.createElement("time");
-        dateTimeEntry.textContent = new Date(game.date).toLocaleString();
-        dateTimeEntry.setAttribute("datetime", game.date.toString())
-        dateEntry.append(dateTimeEntry);
-        row.append(dateEntry);
-
-        const playerCount = await DB.do(() => stores.teamMember.index("game").count(game.id));
-
-        const playerCountEntry = document.createElement("td");
-        playerCountEntry.textContent = playerCount.toString();
-        (playerCountEntry as any).sortProperty = playerCount;
-        row.append(playerCountEntry);
-
-        row.toggleAttribute("clickable", true);
-
-        row.addEventListener("click", () => {
-            showGameDetails(game.id);
-        });
-    }
-
-    await completed;
-
-    tableBody.toggleAttribute("hidden", false);
 }
 
 async function showGameDetails(gameId: string) {
@@ -268,112 +312,6 @@ async function showGameDetails(gameId: string) {
     gameDetails.showModal();
 }
 
-async function updateTableOfPlayers() {
-    const { stores, completed } = db.transaction(["profile", "playerName", "playerMMR", "teamMember"], "readonly");
-
-    const profiles: ProfileEntry[] = await DB.do(() => stores.profile.getAll());
-
-    const tableBody = document.querySelector("table#players > tbody");
-
-    for (const profile of profiles) {
-        const row = tableBody.querySelector(`tr[profile="${profile.id}"]`) ?? (() => {
-            const row = document.createElement("tr");
-            row.setAttribute("profile", profile.id);
-            tableBody.append(row);
-            return row;
-        })();
-
-        const playerNames: PlayerNameEntry[] = await DB.do(() => stores.playerName.index("profile").getAll(profile.id));
-
-        playerNames.sort((a, b) => b.date - a.date);
-
-        const nameEntry = row.querySelector(`td[name]`) ?? (() => {
-            const nameEntry = document.createElement("td");
-            nameEntry.toggleAttribute("name", true);
-            row.append(nameEntry);
-            return nameEntry;
-        })();
-        
-        nameEntry.textContent = playerNames[0].name;
-        (nameEntry as any).sortProperty = playerNames[0].name.toLowerCase();
-
-        const playerMMRs: PlayerMMREntry[] = await DB.do(() => stores.playerMMR.index("profile").getAll(profile.id));
-
-        playerMMRs.sort((a, b) => b.date - a.date);
-
-        const MMREntry = row.querySelector(`td[mmr]`) ?? (() => {
-            const MMREntry = document.createElement("td");
-            MMREntry.toggleAttribute("mmr", true);
-            row.append(MMREntry);
-            return MMREntry;
-        })();
-        
-        MMREntry.textContent = playerMMRs[0].mmr;
-        (MMREntry as any).sortProperty = Number.parseInt(playerMMRs[0].mmr);
-
-        const playedGames = await DB.do(() => stores.teamMember.index("profile").count(profile.id));
-
-        const killsEntry = row.querySelector(`td[kills]`) ?? (() => {
-            const killsEntry = document.createElement("td");
-            killsEntry.toggleAttribute("kills", true);
-            row.append(killsEntry);
-            return killsEntry;
-        })();
-
-        const deathsEntry = row.querySelector(`td[deaths]`) ?? (() => {
-            const deathsEntry = document.createElement("td");
-            deathsEntry.toggleAttribute("deaths", true);
-            row.append(deathsEntry);
-            return deathsEntry;
-        })();
-
-        const assistsEntry = row.querySelector(`td[assists]`) ?? (() => {
-            const assistsEntry = document.createElement("td");
-            assistsEntry.toggleAttribute("assists", true);
-            row.append(assistsEntry);
-            return assistsEntry;
-        })();
-
-        const playedGamesEntry = row.querySelector(`td[games]`) ?? (() => {
-            const playedGamesEntry = document.createElement("td");
-            playedGamesEntry.toggleAttribute("games", true);
-            row.append(playedGamesEntry);
-            return playedGamesEntry;
-        })();
-        
-        playedGamesEntry.textContent = playedGames.toString();
-        (playedGamesEntry as any).sortProperty = playedGames;
-
-        row.toggleAttribute("clickable", true);
-
-        row.addEventListener("click", () => {
-            showPlayerDetails(profile.id);
-        });
-    }
-
-    await completed;
-
-    for (const profile of profiles) {
-        const rivalry = await playerRivalry(profile.id);
-
-        const row = tableBody.querySelector(`tr[profile="${profile.id}"]`);
-    
-        const killsEntry = row.querySelector("td[kills]");
-        killsEntry.textContent = rivalry.kills.toString();
-        (killsEntry as any).sortProperty = rivalry.kills;
-
-        const deathsEntry = row.querySelector("td[deaths]");
-        deathsEntry.textContent = rivalry.deaths.toString();
-        (deathsEntry as any).sortProperty = rivalry.deaths;
-
-        const assistsEntry = row.querySelector("td[assists]");
-        assistsEntry.textContent = rivalry.assists.toString();
-        (assistsEntry as any).sortProperty = rivalry.assists;
-    }
-
-    tableBody.toggleAttribute("hidden", false);
-}
-
 async function showPlayerDetails(playerId: string) {
     const { stores, completed } = db.transaction(["playerMMR", "playerName"], "readonly");
 
@@ -426,100 +364,4 @@ async function showPlayerDetails(playerId: string) {
     gameDetails.querySelector("span[collateral]").textContent = rivalry.collateral.toString();
 
     gameDetails.showModal();
-}
-
-async function updateStorageEstimate() {
-    const bytesToMegaBytes = (xB: number) => xB / 1024 / 1024;
-
-    const quota = await navigator.storage.estimate();
-
-    const footer = document.querySelector("footer");
-    const usedElement = footer.querySelector("span[storage-used]");
-    const totalElement = footer.querySelector("span[storage-quota]");
-
-    usedElement.textContent = bytesToMegaBytes(quota.usage ?? 0).toFixed(2);
-    totalElement.textContent = bytesToMegaBytes(quota.quota ?? 0).toFixed(2);
-}
-
-async function updateUI() {
-    await Promise.all([
-        updateStorageEstimate(),
-        updateTableOfGames(),
-        updateTableOfPlayers()
-    ]);
-}
-
-export async function main() {
-    (window as any).getFile = async () => {
-        await fileObserver.getFile({
-            types: [
-                {
-                    description: "Hunt Showdown Attributes",
-                    accept: {
-                        "text/xml": [".xml"],
-                    },
-                },
-            ],
-            excludeAcceptAllOption: true,
-            multiple: false,
-        });
-
-        document.querySelector("button#fileButton").toggleAttribute("hidden", true);
-    };
-    
-    (window as any).importDB = async () => {
-        const fileInput = document.querySelector<HTMLInputElement>("footer input#import");
-    
-        fileInput.click();
-    
-        let interval;
-        await new Promise<void>((resolve) => {
-            interval = setInterval(() => {
-                if (fileInput.files[0]) resolve()
-            }, 100);
-        });
-        clearInterval(interval);
-    
-        const textDump = await fileInput.files[0].text();
-    
-        const dump = JSON.parse(textDump);
-    
-        await db.import(dump);
-    };
-    
-    (window as any).exportDB = async () => {
-        const dump = await db.export();
-    
-        const textDump = JSON.stringify(dump, null, 2);
-    
-        const file = new File([textDump], "export.json", {
-            type: "application/json",
-        });
-    
-        downloadFile(file);
-    };
-    
-    fileObserver.addEventListener("change", async (event) => {
-        const file: File = (event as any).detail;
-    
-        const text = await file.text();
-    
-        const parser = new DOMParser();
-        
-        const doc = parser.parseFromString(text, "application/xml");
-    
-        const dump = await parseData(doc);
-    
-        await db.import(dump);
-    });
-
-    db.addEventListener("change", async (event) => {
-        await updateUI();
-    });
-
-    SortableHTMLTableCellElement.define();
-    
-    await db.open();
-    
-    await updateUI();
 }

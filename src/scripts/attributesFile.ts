@@ -1,13 +1,11 @@
-import { EventEntry, GameEntry, PlayerMMREntry, PlayerNameEntry, ProfileEntry, TeamEntry, TeamMemberEntry } from "./DB";
-
-const EVENT_LABEL_TIME_REGEX = /(@.*?)~([0-9]{1,2}):([0-9]{2})/g;
+import { DBDump } from "./DB";
 
 /**
  * Parses a Hunt: Showdown `attributes.xml` file into something importable into a DB.
  * @param {Document} doc XML document to parse.
  * @return A DB dump object ready for import.
  */
-export async function parseData(doc: Document) {
+export async function parseData(doc: Document): Promise<DBDump> {
     const numTeamsEntry = doc.querySelector(`Attr[name="MissionBagNumTeams"]`);
     const numTeams = Number.parseInt(numTeamsEntry.attributes.getNamedItem("value").value);
 
@@ -44,28 +42,14 @@ export async function parseData(doc: Document) {
 
     const gameId = await gameHash(teams);
 
-    const gameStore: GameEntry[] = [];
-
-    const teamStore: TeamEntry[] = [];
-
-    const teamMemberStore: TeamMemberEntry[] = [];
-
-    const profileStore: ProfileEntry[] = [];
-
-    const playerNameStore: PlayerNameEntry[] = [];
-
-    const playerMMRStore: PlayerMMREntry[] = [];
-
-    const eventStore: EventEntry[] = [];
-
-    const db = {
-        game: gameStore,
-        team: teamStore,
-        teamMember: teamMemberStore,
-        profile: profileStore,
-        playerName: playerNameStore,
-        playerMMR: playerMMRStore,
-        event: eventStore
+    const db: DBDump = {
+        game: [],
+        team: [],
+        teamMember: [],
+        profile: [],
+        playerName: [],
+        playerMMR: [],
+        event: []
     }
 
     const stamp = Date.now();
@@ -139,6 +123,8 @@ export async function parseData(doc: Document) {
 
     return db;
 }
+
+const EVENT_LABEL_TIME_REGEX = /(@.*?)~([0-9]{1,2}):([0-9]{2})/g;
 
 async function gameHash(teams: any) {
     // Consider a game unique by its player composition and MMRs.
