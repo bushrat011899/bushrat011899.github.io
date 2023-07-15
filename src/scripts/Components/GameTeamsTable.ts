@@ -1,4 +1,4 @@
-import { DB } from "./DB";
+import { DB } from "../DB";
 
 export class GameTeamsHTMLTableElement extends HTMLTableElement {
     static #db: DB;
@@ -46,7 +46,7 @@ export class GameTeamsHTMLTableElement extends HTMLTableElement {
         let spannedRows: { [key: string]: boolean } = {};
         const newRows: HTMLTableRowElement[] = [];
 
-        for await (const teamMember of GameTeamsHTMLTableElement.#db.teamMembers({ index: "game", query: this.game })) {
+        for await (const teamMember of GameTeamsHTMLTableElement.#db.teamMembers().index("game").where(this.game)) {
             const profile = await GameTeamsHTMLTableElement.#db.profiles().get(teamMember.profile);
             const team = await GameTeamsHTMLTableElement.#db.teams().get([this.game, teamMember.number]);
             const playerMMR = await GameTeamsHTMLTableElement.#db.playerMMRs().get([this.game, teamMember.profile]);
@@ -64,7 +64,7 @@ export class GameTeamsHTMLTableElement extends HTMLTableElement {
             });
 
             if (!spannedRows[teamMember.number]) {
-                const teamSize = await GameTeamsHTMLTableElement.#db.teamMembers({ index: "game_number" }).count([this.game, teamMember.number]);
+                const teamSize = await GameTeamsHTMLTableElement.#db.teamMembers().index("game_number").count([this.game, teamMember.number]);
 
                 const teamEntry = document.createElement("td");
                 teamEntry.setAttribute("rowspan", teamSize.toString());

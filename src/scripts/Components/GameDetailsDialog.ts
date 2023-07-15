@@ -1,7 +1,7 @@
-import { DB } from "./DB";
+import { DB } from "../DB";
 import { GameEventsHTMLOListElement } from "./GameEventsList";
 import { GameTeamsHTMLTableElement } from "./GameTeamsTable";
-import { mmrChart } from "./mmrChart";
+import { mmrChart } from "../mmrChart";
 
 export class GameDetailsHTMLDialogElement extends HTMLDialogElement {
     static #db: DB;
@@ -51,10 +51,10 @@ export class GameDetailsHTMLDialogElement extends HTMLDialogElement {
 
         const players = [];
         
-        for await (const teamMember of GameDetailsHTMLDialogElement.#db.teamMembers({ index: "game", query: this.game })) {
+        for await (const teamMember of GameDetailsHTMLDialogElement.#db.teamMembers().index("game").where(this.game)) {
             const data = [];
 
-            for await (const playerMMR of GameDetailsHTMLDialogElement.#db.playerMMRs({ index: "profile", query: teamMember.profile })) {
+            for await (const playerMMR of GameDetailsHTMLDialogElement.#db.playerMMRs().index("profile").where(teamMember.profile)) {
                 data.push({
                     x: playerMMR.date,
                     y: Number.parseInt(playerMMR.mmr)

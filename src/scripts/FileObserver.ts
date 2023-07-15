@@ -1,3 +1,5 @@
+import { EventListnerAsyncIterator } from "./EventListnerAsyncIterator";
+
 export class FileObserver extends EventTarget {
     #handle: FileSystemHandle;
     #lastModified = 0;
@@ -57,6 +59,10 @@ Alternatively, you can copy & paste your file into a different folder (e.g., 'Do
         this.#watchInterval = options?.watchInterval ?? this.#watchInterval;
 
         this.start();
+    }
+
+    [Symbol.asyncIterator](): EventListnerAsyncIterator<"change"> {
+        return new EventListnerAsyncIterator(this, "change");
     }
 }
 

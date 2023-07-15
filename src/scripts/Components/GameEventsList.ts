@@ -1,4 +1,4 @@
-import { DB } from "./DB";
+import { DB } from "../DB";
 
 export class GameEventsHTMLOListElement extends HTMLOListElement {
     static #db: DB;
@@ -41,7 +41,7 @@ export class GameEventsHTMLOListElement extends HTMLOListElement {
             return;
         }
 
-        const events = await GameEventsHTMLOListElement.#db.events({ index: "game" }).getAll(this.game);
+        const events = await GameEventsHTMLOListElement.#db.events().index("game").getAll(this.game);
 
         events.sort((a, b) => a.clock - b.clock);
         

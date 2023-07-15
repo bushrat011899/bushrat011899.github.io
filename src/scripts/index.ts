@@ -1,22 +1,23 @@
 import { DB, Schema } from "./DB";
 import { parseData } from "./parseData";
 import { FileObserver } from "./FileObserver";
-import { downloadFile } from "./downloadFile";
-import { SortableHTMLTableCellElement } from "./SortableTable";
-import { mmrChart } from "./mmrChart";
-import { GamesHTMLTableElement } from "./GamesTable";
-import { PlayersHTMLTableElement } from "./PlayersTable";
-import { StorageUseEstimateHTMLSpanElement } from "./StorageUseEstimate";
-import { GameTeamsHTMLTableElement } from "./GameTeamsTable";
-import { GameEventsHTMLOListElement } from "./GameEventsList";
-import { GameDetailsHTMLDialogElement } from "./GameDetailsDialog";
-import { until } from "./until";
-
-const db = new DB();
-
-const fileObserver = new FileObserver();
+import { downloadFile } from "./Utils/downloadFile";
+import { SortableHTMLTableCellElement } from "./Components/SortableTable";
+import { GamesHTMLTableElement } from "./Components/GamesTable";
+import { PlayersHTMLTableElement } from "./Components/PlayersTable";
+import { StorageUseEstimateHTMLSpanElement } from "./Components/StorageUseEstimate";
+import { GameTeamsHTMLTableElement } from "./Components/GameTeamsTable";
+import { GameEventsHTMLOListElement } from "./Components/GameEventsList";
+import { GameDetailsHTMLDialogElement } from "./Components/GameDetailsDialog";
+import { until } from "./Utils/until";
+import { EventListnerAsyncIterator } from "./EventListnerAsyncIterator";
+import { PlayerDetailsHTMLDialogElement } from "./Components/PlayerDetailsDialog";
 
 export async function main() {
+    const db = new DB();
+    
+    const fileObserver = new FileObserver();
+
     StorageUseEstimateHTMLSpanElement.define();
     SortableHTMLTableCellElement.define();
     GamesHTMLTableElement.define(db);
@@ -24,10 +25,11 @@ export async function main() {
     GameTeamsHTMLTableElement.define(db);
     GameEventsHTMLOListElement.define(db);
     GameDetailsHTMLDialogElement.define(db);
-    
-    fileObserver.addEventListener("change", async (event) => {
-        const file: File = (event as any).detail;
-    
+    PlayerDetailsHTMLDialogElement.define(db);
+
+    (async () => { for await (const change of fileObserver) {
+        const file: File = (change as any).detail;
+
         const text = await file.text();
     
         const parser = new DOMParser();
@@ -37,9 +39,11 @@ export async function main() {
         const dump = await parseData(doc);
     
         await db.import(dump);
-    });
+    }})();
 
-    document.getElementById("fileButton").addEventListener("click", async (event) => {
+    const fileButton = document.getElementById("fileButton");
+
+    (async () => { for await (const _ of new EventListnerAsyncIterator(fileButton, "click")) {
         await fileObserver.getFile({
             types: [
                 {
@@ -53,8 +57,10 @@ export async function main() {
             multiple: false,
         });
 
-        document.getElementById("fileButton").toggleAttribute("hidden", true);
-    });
+        fileButton.toggleAttribute("hidden", true);
+
+        break;
+    }})();
 
     document.getElementById("importButton").addEventListener("click", async () => {
         const fileInput = document.querySelector<HTMLInputElement>("footer input#import");
@@ -94,58 +100,20 @@ export async function main() {
     document.getElementById("players").addEventListener("profileChosen", (event: CustomEvent) => {
         const profile: Schema["profile"] = event.detail;
 
-        showPlayerDetails(profile.id);
+        const dialog = document.querySelector<PlayerDetailsHTMLDialogElement>("dialog#playerDetails");
+
+        dialog.profile = profile.id;
+        dialog.showModal();
     });
 
     document.getElementById("gamePlayers").addEventListener("profileChosen", (event: CustomEvent) => {
         const profile: Schema["profile"] = event.detail;
 
-        showPlayerDetails(profile.id);
+        const dialog = document.querySelector<PlayerDetailsHTMLDialogElement>("dialog#playerDetails");
+
+        dialog.profile = profile.id;
+        dialog.showModal();
     });
     
     await db.open();
-}
-
-async function showPlayerDetails(playerId: string) {
-    const playerName = await db.currentPlayerName(playerId);
-
-    const playerMMRs = await db.playerMMRs({ index: "profile" }).getAll(playerId);
-    
-    const gameDetails = document.querySelector<HTMLDialogElement>("dialog#playerDetails");
-    const mmrChartArea = gameDetails.querySelector("div#chartArea");
-
-    const playerNameElement = gameDetails.querySelector<HTMLAnchorElement>("a[name]");
-    playerNameElement.textContent = playerName;
-    playerNameElement.href = `https://www.steamidfinder.com/lookup/${playerName}/`;
-    playerNameElement.target = "_blank";
-
-    gameDetails.querySelector("span[profile]").textContent = playerId;
-
-    playerMMRs.sort((a, b) => a.date - b.date);
-
-    const players = [{
-        name: playerName,
-        data: [...playerMMRs.map(entry => ({
-            x: entry.date,
-            y: Number.parseInt(entry.mmr)
-        }))],
-    }];
-
-    const chart = await mmrChart(players);
-
-    mmrChartArea.replaceChildren(chart);
-    
-    const mmrStats = await db.playerMMRStatistics(playerId);
-
-    gameDetails.querySelector("span[mmrAverage]").textContent = Math.floor(mmrStats.mean).toString();
-    gameDetails.querySelector("span[mmrStd]").textContent = Math.floor(mmrStats.std).toString();
-
-    const rivalry = await db.playerRivalry(playerId);
-
-    gameDetails.querySelector("span[kills]").textContent = rivalry.kills.toString();
-    gameDetails.querySelector("span[deaths]").textContent = rivalry.deaths.toString();
-    gameDetails.querySelector("span[assists]").textContent = rivalry.assists.toString();
-    gameDetails.querySelector("span[collateral]").textContent = rivalry.collateral.toString();
-
-    gameDetails.showModal();
 }

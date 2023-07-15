@@ -2,7 +2,6 @@ import { IDBCursorAsyncIterator } from "./IDBCursorAsyncIterator";
 import { IDBRequestAsync } from "./IDBRequestAsync";
 
 export class IDBObjectStoreAsync<Entry, Indexes extends string | number | symbol> {
-    #store: IDBObjectStore | IDBIndex;
     #options: IDBObjectStoreAsyncOptions<Indexes>;
 
     constructor(
@@ -10,7 +9,12 @@ export class IDBObjectStoreAsync<Entry, Indexes extends string | number | symbol
         options?: IDBObjectStoreAsyncOptions<Indexes>
     ) {
         this.#options = options ?? {};
-        this.#store = options?.index ? store.index(options.index as string) : store;
+        this.#_store = store;
+    }
+
+    #_store: IDBObjectStore;
+    get #store() {
+        return this.#options.index ? this.#_store.index(this.#options.index as string) : this.#_store
     }
 
     reverse(): this {
@@ -25,6 +29,28 @@ export class IDBObjectStoreAsync<Entry, Indexes extends string | number | symbol
         return this;
     }
 
+    forwards(): this { return this.direction("next"); }
+
+    backwards(): this { return this.direction("prev"); }
+
+    direction(direction: IDBObjectStoreAsyncOptions<Indexes>["direction"]): this {
+        this.#options.direction = direction;
+
+        return this;
+    }
+
+    index(index?: IDBObjectStoreAsyncOptions<Indexes>["index"]): this {
+        this.#options.index = index;
+
+        return this;
+    }
+
+    where(query?: IDBObjectStoreAsyncOptions<Indexes>["query"]): this {
+        this.#options.query = query;
+
+        return this;
+    }
+
     [Symbol.asyncIterator](): IDBCursorAsyncIterator<Entry> {
         const request = this.#store.openCursor(this.#options?.query, this.#options?.direction);
 
@@ -32,15 +58,15 @@ export class IDBObjectStoreAsync<Entry, Indexes extends string | number | symbol
     }
 
     async count(key?: IDBValidKey | IDBKeyRange): Promise<number> {
-        return await new IDBRequestAsync(this.#store.count(key ?? this.#options?.query));
+        return await IDBRequestAsync(this.#store.count(key ?? this.#options?.query));
     }
 
     async getAll(key?: IDBValidKey | IDBKeyRange): Promise<Entry[]> {
-        return await new IDBRequestAsync(this.#store.getAll(key ?? this.#options?.query));
+        return await IDBRequestAsync(this.#store.getAll(key ?? this.#options?.query));
     }
 
     async get(key?: IDBValidKey | IDBKeyRange): Promise<Entry> {
-        return await new IDBRequestAsync(this.#store.get(key ?? this.#options?.query));
+        return await IDBRequestAsync(this.#store.get(key ?? this.#options?.query));
     }
 }
 

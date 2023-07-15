@@ -171,7 +171,7 @@ export class DB extends IDBDatabaseAsync<"HuntShowStats", typeof MIGRATIONS, Sch
         let playerName = null;
         let newestDate = 0;
 
-        for await (const entry of this.playerNames({ index: "profile", query: id }).reverse()) {
+        for await (const entry of this.playerNames().index("profile").where(id).reverse()) {
             if (entry.date > newestDate) {
                 playerName = entry.name;
                 newestDate = entry.date;
@@ -185,7 +185,7 @@ export class DB extends IDBDatabaseAsync<"HuntShowStats", typeof MIGRATIONS, Sch
         let playerMMR = null;
         let newestDate = 0;
 
-        for await (const entry of this.playerMMRs({ index: "profile", query: id }).reverse()) {
+        for await (const entry of this.playerMMRs().index("profile").where(id).reverse()) {
             if (entry.date > newestDate) {
                 playerMMR = entry.mmr;
                 newestDate = entry.date;
@@ -203,7 +203,7 @@ export class DB extends IDBDatabaseAsync<"HuntShowStats", typeof MIGRATIONS, Sch
             collateral: 0
         };
     
-        for await (const event of this.events({ index: "profile", query: id })) {
+        for await (const event of this.events().index("profile").where(id)) {
             // Fall-Through Explicitly Used
             switch (event.category) {
                 case "downedbyme":
@@ -225,7 +225,7 @@ export class DB extends IDBDatabaseAsync<"HuntShowStats", typeof MIGRATIONS, Sch
 
     async playerMMRStatistics(id: Schema["profile"]["id"]) {
         let count = 0, sum1 = 0, sum2 = 0;
-        for await (const entry of this.playerMMRs({ index: "profile", query: id })) {
+        for await (const entry of this.playerMMRs().index("profile").where(id)) {
             const mmr = Number.parseInt(entry.mmr);
 
             count += 1;

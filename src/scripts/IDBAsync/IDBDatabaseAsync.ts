@@ -162,7 +162,7 @@ export class IDBDatabaseAsync<
     
         for (const storeName in stores) {
             const name: keyof Table<Schema> = storeName as any;
-            dump[name] = await new IDBRequestAsync(stores[name].getAll());
+            dump[name] = await IDBRequestAsync(stores[name].getAll());
         }
     
         return dump as Table<Schema>;
@@ -178,7 +178,7 @@ export class IDBDatabaseAsync<
         for (const storeName in dump) {
             const name: keyof Table<Schema> = storeName as any;
             for (const entry of dump[name]) {
-                await new IDBRequestAsync(stores[name].put(entry));
+                await IDBRequestAsync(stores[name].put(entry));
             }
         }
     }

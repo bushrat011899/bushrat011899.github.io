@@ -1,4 +1,4 @@
-import { DB } from "./DB";
+import { DB } from "../DB";
 
 export class GamesHTMLTableElement extends HTMLTableElement {
     static #db: DB;
@@ -16,12 +16,12 @@ export class GamesHTMLTableElement extends HTMLTableElement {
 
         const newRows = [];
 
-        for await (const game of GamesHTMLTableElement.#db.games({ index: "date" })) {
+        for await (const game of GamesHTMLTableElement.#db.games().index("date")) {
             const possibleRow = tableBody.querySelector(`tr[game="${game.id}"]`);
     
             if (possibleRow) continue;
 
-            const playerCount = await GamesHTMLTableElement.#db.teamMembers({ index: "game" }).count(game.id);
+            const playerCount = await GamesHTMLTableElement.#db.teamMembers().index("game").count(game.id);
     
             const row = document.createElement("tr");
             const dateEntry = document.createElement("td");

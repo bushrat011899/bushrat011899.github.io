@@ -1,4 +1,4 @@
-import { DB } from "./DB";
+import { DB } from "../DB";
 
 export class PlayersHTMLTableElement extends HTMLTableElement {
     static #db: DB;
@@ -19,8 +19,8 @@ export class PlayersHTMLTableElement extends HTMLTableElement {
         for await (const profile of PlayersHTMLTableElement.#db.profiles()) {
             const rivalry = await PlayersHTMLTableElement.#db.playerRivalry(profile.id);
             const playerName = await PlayersHTMLTableElement.#db.currentPlayerName(profile.id);
-            const playerMMRs = await PlayersHTMLTableElement.#db.playerMMRs({ index: "profile" }).getAll(profile.id);
-            const playedGames = await PlayersHTMLTableElement.#db.teamMembers({ index: "profile" }).count(profile.id);
+            const playerMMRs = await PlayersHTMLTableElement.#db.playerMMRs().index("profile").getAll(profile.id);
+            const playedGames = await PlayersHTMLTableElement.#db.teamMembers().index("profile").count(profile.id);
 
             const row = tableBody.querySelector(`tr[profile="${profile.id}"]`) ?? (() => {
                 const row = document.createElement("tr");
