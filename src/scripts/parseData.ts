@@ -1,11 +1,11 @@
-import { DBDump } from "./DB";
+import type { Schema } from "./DB";
 
 /**
  * Parses a Hunt: Showdown `attributes.xml` file into something importable into a DB.
  * @param {Document} doc XML document to parse.
  * @return A DB dump object ready for import.
  */
-export async function parseData(doc: Document): Promise<DBDump> {
+export async function parseData(doc: Document): Promise<{ [key in keyof Schema]: Schema[key][]; }> {
     const numTeamsEntry = doc.querySelector(`Attr[name="MissionBagNumTeams"]`);
     const numTeams = Number.parseInt(numTeamsEntry.attributes.getNamedItem("value").value);
 
@@ -42,7 +42,7 @@ export async function parseData(doc: Document): Promise<DBDump> {
 
     const gameId = await gameHash(teams);
 
-    const db: DBDump = {
+    const db: { [key in keyof Schema]: Schema[key][]; } = {
         game: [],
         team: [],
         teamMember: [],

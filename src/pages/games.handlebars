@@ -8,7 +8,7 @@
     <tbody hidden></tbody>
 </table>
 
-<dialog id="gameDetails">
+<dialog is="hss-dialog-game-details" id="gameDetails">
     <form>
         <p>
             <h1>Game Details</h1>
@@ -16,7 +16,7 @@
         </p>
 
         <h2>Players</h2>
-        <table id="gamePlayers" class="styled-table">
+        <table is="hss-table-game-teams" id="gamePlayers" class="styled-table">
             <thead>
                 <tr>
                     <th>Team</th>
@@ -31,7 +31,7 @@
         <div mmr-chart></div>
         
         <h2>Events</h2>
-        <ol events></ol>
+        <ol is="hss-ol-game-events" id="gameEvents"></ol>
         
         <div>
             <button value="cancel" formmethod="dialog">Close</button>

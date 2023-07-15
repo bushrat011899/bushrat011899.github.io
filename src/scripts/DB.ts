@@ -1,278 +1,263 @@
+import { IDBDatabaseAsync, createSchema } from "./IDBAsync/IDBDatabaseAsync";
+import { IDBObjectStoreAsyncOptions } from "./IDBAsync/IDBObjectStoreAsync";
+
+const TABLES = {
+    game: {
+        key: "id" as const,
+        indexes: {
+            date: "date" as const,
+        },
+    },
+
+    team: {
+        key: ["game", "number"] as const,
+        indexes: {
+            game: "game" as const,
+            number: "number" as const,
+            date: "date" as const,
+        },
+    },
+
+    teamMember: {
+        key: ["game", "number", "profile"] as const,
+        indexes: {
+            game: "game" as const,
+            game_number: ["game", "number"] as const,
+            profile: "profile" as const,
+            date: "date" as const,
+        },
+    },
+
+    profile: {
+        key: "id" as const,
+        indexes: {
+            date: "date" as const,
+        },
+    },
+
+    playerName: {
+        key: ["profile", "name"] as const,
+        indexes: {
+            profile: "profile" as const,
+            date: "date" as const,
+        },
+    },
+
+    playerMMR: {
+        key: ["game", "profile"] as const,
+        indexes: {
+            game: "game" as const,
+            profile: "profile" as const,
+            date: "date" as const,
+        },
+    },
+
+    event: {
+        key: ["game", "profile", "category", "label", "clock"] as const,
+        indexes: {
+            game: "game" as const,
+            profile: "profile" as const,
+            category: "category" as const,
+            label: "label" as const,
+            clock: "clock" as const,
+            date: "date" as const,
+        },
+    },
+};
+
+const MIGRATIONS = {
+    0: (db: IDBDatabase) => {
+        //createSchema(db, TABLES);
+        console.trace("Applying Migration 0: DB Initialisation");
+
+        const game = db.createObjectStore("game", { keyPath: "id" });
+        game.createIndex("date", "date", { unique: false });
+
+        const profile = db.createObjectStore("profile", { keyPath: "id" });
+        profile.createIndex("date", "date", { unique: false });
+        
+        const playerMMR = db.createObjectStore("playerMMR", { keyPath: ["game", "profile"] });
+        playerMMR.createIndex("game", "game", { unique: false });
+        playerMMR.createIndex("profile", "profile", { unique: false });
+        playerMMR.createIndex("date", "date", { unique: false });
+        
+        const playerName = db.createObjectStore("playerName", { keyPath: ["profile", "name"] });
+        playerName.createIndex("profile", "profile", { unique: false });
+        playerName.createIndex("date", "date", { unique: false });
+        
+        const team = db.createObjectStore("team", { keyPath: ["game", "number"] });
+        team.createIndex("game", "game", { unique: false });
+        team.createIndex("number", "number", { unique: false });
+        team.createIndex("date", "date", { unique: false });
+        
+        const teamMember = db.createObjectStore("teamMember", { keyPath: ["game", "number", "profile"] });
+        teamMember.createIndex("game", "game", { unique: false });
+        teamMember.createIndex("game_number", ["game", "number"], { unique: false });
+        teamMember.createIndex("profile", "profile", { unique: false });
+        teamMember.createIndex("date", "date", { unique: false });
+        
+        const eventStore = db.createObjectStore("event", { keyPath: ["game", "profile", "category", "label", "clock"] });
+        eventStore.createIndex("game", "game", { unique: false });
+        eventStore.createIndex("profile", "profile", { unique: false });
+        eventStore.createIndex("category", "category", { unique: false });
+        eventStore.createIndex("label", "label", { unique: false });
+        eventStore.createIndex("clock", "clock", { unique: false });
+        eventStore.createIndex("date", "date", { unique: false });
+
+        return 1;
+    },
+
+    1: () => 1
+};
+
+export type Schema = {
+    game: {
+        id: string;
+        date: number;
+    };
+
+    team: {
+        game: Schema["game"]["id"];
+        number: string;
+        mmr: string;
+        own: boolean;
+        date: number;
+    };
+
+    teamMember: {
+        game: Schema["game"]["id"];
+        number: Schema["team"]["number"];
+        profile: Schema["profile"]["id"];
+        date: number;
+    };
+
+    profile: {
+        id: string;
+        date: number;
+    };
+
+    playerName: {
+        profile: Schema["profile"]["id"];
+        name: string;
+        date: number;
+    };
+
+    playerMMR: {
+        game: Schema["game"]["id"];
+        profile: Schema["profile"]["id"];
+        mmr: string;
+        date: number;
+    };
+
+    event: {
+        game: Schema["game"]["id"];
+        profile: Schema["profile"]["id"];
+        category: string;
+        label: string;
+        clock: number;
+        date: number;
+    };
+};
+
 /**
  * Encapsulated IndexedDB Database which maps common operations to a `Promise`.
  */
-export class DB extends EventTarget {
-    static #DB_NAME = "HuntShowStats";
-    static #CURRENT_VERSION = 1;
-    static #MIGRATIONS = {
-        0: (db: IDBDatabase) => {
-            console.trace("Applying Migration 0: DB Initialisation");
-    
-            const game = db.createObjectStore("game", { keyPath: "id" });
-            game.createIndex("date", "date", { unique: false });
-    
-            const profile = db.createObjectStore("profile", { keyPath: "id" });
-            profile.createIndex("date", "date", { unique: false });
-            
-            const playerMMR = db.createObjectStore("playerMMR", { keyPath: ["game", "profile"] });
-            playerMMR.createIndex("game", "game", { unique: false });
-            playerMMR.createIndex("profile", "profile", { unique: false });
-            playerMMR.createIndex("date", "date", { unique: false });
-            
-            const playerName = db.createObjectStore("playerName", { keyPath: ["profile", "name"] });
-            playerName.createIndex("profile", "profile", { unique: false });
-            playerName.createIndex("date", "date", { unique: false });
-            
-            const team = db.createObjectStore("team", { keyPath: ["game", "number"] });
-            team.createIndex("game", "game", { unique: false });
-            team.createIndex("number", "number", { unique: false });
-            team.createIndex("date", "date", { unique: false });
-            
-            const teamMember = db.createObjectStore("teamMember", { keyPath: ["game", "number", "profile"] });
-            teamMember.createIndex("game", "game", { unique: false });
-            teamMember.createIndex("game_number", ["game", "number"], { unique: false });
-            teamMember.createIndex("profile", "profile", { unique: false });
-            teamMember.createIndex("date", "date", { unique: false });
-            
-            const eventStore = db.createObjectStore("event", { keyPath: ["game", "profile", "category", "label", "clock"] });
-            eventStore.createIndex("game", "game", { unique: false });
-            eventStore.createIndex("profile", "profile", { unique: false });
-            eventStore.createIndex("category", "category", { unique: false });
-            eventStore.createIndex("label", "label", { unique: false });
-            eventStore.createIndex("clock", "clock", { unique: false });
-            eventStore.createIndex("date", "date", { unique: false });
-    
-            return 1;
-        }
+export class DB extends IDBDatabaseAsync<"HuntShowStats", typeof MIGRATIONS, Schema, typeof TABLES> {
+    constructor() {
+        super("HuntShowStats", 1, MIGRATIONS);
     }
 
-    #db: IDBDatabase = null;
-    #ready = false;
+    async currentPlayerName(id: Schema["profile"]["id"]): Promise<string> {
+        let playerName = null;
+        let newestDate = 0;
 
-    get ready() { return this.#ready; }
-
-    /**
-     * Attempts to open a connection to the database, and stores it within this object.
-     * @returns {Promise<void>}
-     */
-    async open(): Promise<void> {
-        if (this.#db != null) return;
-
-        const persist = await navigator.storage.persist();
-
-        if (persist) {
-            console.log("Storage will not be cleared except by explicit user action");
-        } else {
-            console.log("Storage may be cleared by the UA under storage pressure.");
-        }
-
-        this.#db = await new Promise((resolve, reject) => {
-            const request = indexedDB.open(DB.#DB_NAME, DB.#CURRENT_VERSION);
-            
-            request.onerror = (event) => {
-                console.error("Could not open an IndexDB", event);
-
-                reject(event);
-            };
-            
-            request.onsuccess = (event) => {
-                console.trace("DB Opened", event);
-
-                const db: IDBDatabase = (event.target as any).result;
-
-                resolve(db);
-            };
-
-            request.onupgradeneeded = (event) => {
-                console.trace("DB Upgrade Requested", event);
-
-                const db: IDBDatabase = (event.target as any).result;
-
-                let currentVersion = event.oldVersion;
-                while (currentVersion != event.newVersion) {
-                    const migrations = DB.#MIGRATIONS;
-                    const key = currentVersion as keyof typeof migrations;
-                    currentVersion = DB.#MIGRATIONS[key](db);
-                }
-
-                console.trace("DB Migrated");
-            };
-        });
-
-        this.#ready = true;
-
-        this.dispatchEvent(new CustomEvent("ready"));
-    }
-
-    /**
-     * Wraps an `IDBRequest<T>` in a `Promise` to allow async interop.
-     * @param {() => IDBRequest<T>} dbOperation A database operation to perform.
-     * @returns {T} The result of the request.
-     */
-    static async do<T>(dbOperation: () => IDBRequest<T>): Promise<T> {
-        return await new Promise((resolve, reject) => {
-            const operationResult = dbOperation();
-    
-            operationResult.onsuccess = (event) => {
-                const result = (event.target as any).result;
-                resolve(result);
-            };
-    
-            operationResult.onerror = (event) => {
-                console.error("DB Operation Failed", event);
-                reject(event);
-            };
-        });
-    }
-
-    /**
-     * Start a new transaction with this database.
-     * @param {string | Iterable<string>} storeNames Stores you are requesting access to.
-     * @param {IDBTransactionMode | undefined} mode The mode you want for these stores.
-     * @param {IDBTransactionOptions | undefined} options Additional options.
-     * @returns A collection including the transaction, all object stores requested, and a `Promise` which will resolve when the transaction is completed.
-     */
-    transaction<K extends keyof DBDump>(storeNames: Iterable<K>, mode?: IDBTransactionMode, options?: IDBTransactionOptions) {
-        const transaction = this.#db.transaction(storeNames, mode, options);
-
-        if (mode == "readwrite") {
-            transaction.addEventListener("complete", (event) => {
-                this.dispatchEvent(new CustomEvent("change", {
-                    detail: {
-                        stores: storeNames
-                    }
-                }));
-            });
-        }
-
-        const partialStores: Partial<{
-            [key in K]: IDBObjectStore;
-        }> = {};
-
-        for (const storeName of storeNames) {
-            partialStores[storeName] = transaction.objectStore(storeName);
-        }
-
-        const stores = partialStores as { [key in K]: IDBObjectStore; }
-
-        const completed = new Promise<void>((resolve, reject) => {
-            transaction.oncomplete = (event) => {
-                resolve();
-            };
-
-            transaction.onerror = (event) => {
-                console.error("DB Transaction Failed", event);
-                reject(event);
-            }
-        });
-
-        return {
-            transaction,
-            stores,
-            completed
-        }
-    }
-
-    /**
-     * Export the entire database.
-     * @returns {DBDump} JS Object representing items to be imported.
-     */
-    async export(): Promise<DBDump> {
-        const { stores, completed } = this.transaction(this.#db.objectStoreNames as any, "readonly");
-
-        const dump: Partial<DBDump> = {};
-    
-        for (const storeName in stores) {
-            const name: keyof DBDump = storeName as any;
-            dump[name] = await DB.do(() => stores[name].getAll());
-        }
-    
-        await completed;
-    
-        return dump as DBDump;
-    }
-
-    /**
-     * Import new data into the database.
-     * @param {Partial<DBDump>} dump JS Object representing items to be imported.
-     */
-    async import(dump: Partial<DBDump>) {
-        const { stores, completed } = this.transaction(this.#db.objectStoreNames as any, "readwrite");
-
-        for (const storeName in dump) {
-            const name: keyof DBDump = storeName as any;
-            for (const entry of dump[name]) {
-                await DB.do(() => stores[name].put(entry));
+        for await (const entry of this.playerNames({ index: "profile", query: id }).reverse()) {
+            if (entry.date > newestDate) {
+                playerName = entry.name;
+                newestDate = entry.date;
             }
         }
 
-        await completed;
+        return playerName;
     }
-}
 
-export type GameId = string;
+    async currentPlayerMMR(id: Schema["profile"]["id"]): Promise<number> {
+        let playerMMR = null;
+        let newestDate = 0;
 
-export type GameEntry = {
-    id: GameId;
-    date: number;
-};
+        for await (const entry of this.playerMMRs({ index: "profile", query: id }).reverse()) {
+            if (entry.date > newestDate) {
+                playerMMR = entry.mmr;
+                newestDate = entry.date;
+            }
+        }
+        
+        return Number.parseInt(playerMMR);
+    }
 
-export type ProfileId = string;
+    async playerRivalry(id: Schema["profile"]["id"]) {
+        const stats = {
+            kills: 0,
+            deaths: 0,
+            assists: 0,
+            collateral: 0
+        };
+    
+        for await (const event of this.events({ index: "profile", query: id })) {
+            // Fall-Through Explicitly Used
+            switch (event.category) {
+                case "downedbyme":
+                case "killedbyme": stats.kills += 1; break;
+                
+                case "downedme":
+                case "killedme": stats.deaths += 1; break;
+                
+                case "downedbyteammate":
+                case "killedbyteammate": stats.assists += 1; break;
+                
+                case "downedteammate":
+                case "killedteammate": stats.collateral += 1; break;
+            }
+        }
+    
+        return stats;
+    }
 
-export type ProfileEntry = {
-    id: ProfileId;
-    date: number;
-}
+    async playerMMRStatistics(id: Schema["profile"]["id"]) {
+        let count = 0, sum1 = 0, sum2 = 0;
+        for await (const entry of this.playerMMRs({ index: "profile", query: id })) {
+            const mmr = Number.parseInt(entry.mmr);
 
-export type TeamId = string;
+            count += 1;
+            sum1 += mmr;
+            sum2 += mmr * mmr;
+        }
+    
+        const countS1 = count > 0 ? count : 1;
+        const countS2 = count > 1 ? count - 1 : 1;
+        const mean = sum1 / countS1;
+        const variance = Math.sqrt((sum2 / countS1 - mean ** 2) * count / countS2);
+    
+        const stats = {
+            mean,
+            std: Math.sqrt(variance),
+            count
+        };
+    
+        return stats;
+    }
 
-export type TeamEntry = {
-    game: GameId;
-    number: TeamId;
-    mmr: string;
-    own: boolean;
-    date: number;
-}
+    get games() { return (options?: IDBObjectStoreAsyncOptions<keyof typeof TABLES["game"]["indexes"]>) => this.store("game", options); }
 
-export type TeamMemberEntry = {
-    game: GameId;
-    number: TeamId;
-    profile: ProfileId;
-    date: number;
-}
+    get teams() { return (options?: IDBObjectStoreAsyncOptions<keyof typeof TABLES["team"]["indexes"]>) => this.store("team", options); }
 
-export type PlayerNameEntry = {
-    profile: ProfileId;
-    name: string;
-    date: number;
-}
+    get teamMembers() { return (options?: IDBObjectStoreAsyncOptions<keyof typeof TABLES["teamMember"]["indexes"]>) => this.store("teamMember", options); }
 
-export type PlayerMMREntry = {
-    game: GameId;
-    profile: ProfileId;
-    mmr: string;
-    date: number;
-}
+    get profiles() { return (options?: IDBObjectStoreAsyncOptions<keyof typeof TABLES["profile"]["indexes"]>) => this.store("profile", options); }
 
-export type EventEntry = {
-    game: GameId;
-    profile: ProfileId;
-    category: string;
-    label: string;
-    clock: number;
-    date: number;
-}
+    get playerNames() { return (options?: IDBObjectStoreAsyncOptions<keyof typeof TABLES["playerName"]["indexes"]>) => this.store("playerName", options); }
 
-export type DBDump = {
-    game: GameEntry[];
-    team: TeamEntry[];
-    teamMember: TeamMemberEntry[];
-    profile: ProfileEntry[];
-    playerName: PlayerNameEntry[];
-    playerMMR: PlayerMMREntry[];
-    event: EventEntry[];
-}
+    get playerMMRs() { return (options?: IDBObjectStoreAsyncOptions<keyof typeof TABLES["playerMMR"]["indexes"]>) => this.store("playerMMR", options); }
 
-export type DBStores = {
-    [key in keyof DBDump]: IDBObjectStore;
+    get events() { return (options?: IDBObjectStoreAsyncOptions<keyof typeof TABLES["event"]["indexes"]>) => this.store("event", options); }
 }

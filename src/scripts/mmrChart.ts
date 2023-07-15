@@ -1,4 +1,4 @@
-import { getChart } from './chartLibrary';
+import { getChart } from './getChart';
 
 /**
  * Create a chart of 1 or more players' MMRs over time.

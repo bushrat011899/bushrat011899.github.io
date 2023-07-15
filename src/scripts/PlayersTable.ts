@@ -1,4 +1,4 @@
-import { DB, DBDump, EventEntry, PlayerMMREntry, PlayerNameEntry, ProfileEntry } from "./DB";
+import { DB } from "./DB";
 
 export class PlayersHTMLTableElement extends HTMLTableElement {
     static #db: DB;
@@ -8,43 +8,19 @@ export class PlayersHTMLTableElement extends HTMLTableElement {
     }
 
     connectedCallback() {
-        PlayersHTMLTableElement.#db.addEventListener("change", async (event: CustomEvent) => {
-            const stores: [keyof DBDump] = [...event.detail.stores] as any;
-
-            const changed = stores.includes("profile")
-                || stores.includes("playerName")
-                || stores.includes("playerMMR")
-                || stores.includes("teamMember")
-                || stores.includes("event");
-
-            if (changed) await this.update();
-        });
-
-        if (PlayersHTMLTableElement.#db.ready) this.update(); // Fire-and-Forget
-        else {
-            PlayersHTMLTableElement.#db.addEventListener("ready", async () => {
-                await this.update();
-            })
-        }
+        PlayersHTMLTableElement.#db.onChange(["profile", "playerName", "playerMMR", "teamMember", "event"], () => this.update());
     }
 
     async update() {
-        const { stores, completed } = PlayersHTMLTableElement.#db.transaction([
-            "profile", "playerName", "playerMMR", "teamMember", "event"
-        ], "readonly");
-
-        const profiles: ProfileEntry[] = await DB.do(() => stores.profile.getAll());
-
         const tableBody = this.querySelector("tbody");
 
         const newRows: HTMLTableRowElement[] = [];
 
-        for (const profile of profiles) {
-            const playerNames: PlayerNameEntry[] = await DB.do(() => stores.playerName.index("profile").getAll(profile.id));
-            const playerMMRs: PlayerMMREntry[] = await DB.do(() => stores.playerMMR.index("profile").getAll(profile.id));
-            const events: EventEntry[] = await DB.do(() => stores.event.index("profile").getAll(profile.id));
-            const playedGames = await DB.do(() => stores.teamMember.index("profile").count(profile.id));
-            const rivalry = await playerRivalry(events);
+        for await (const profile of PlayersHTMLTableElement.#db.profiles()) {
+            const rivalry = await PlayersHTMLTableElement.#db.playerRivalry(profile.id);
+            const playerName = await PlayersHTMLTableElement.#db.currentPlayerName(profile.id);
+            const playerMMRs = await PlayersHTMLTableElement.#db.playerMMRs({ index: "profile" }).getAll(profile.id);
+            const playedGames = await PlayersHTMLTableElement.#db.teamMembers({ index: "profile" }).count(profile.id);
 
             const row = tableBody.querySelector(`tr[profile="${profile.id}"]`) ?? (() => {
                 const row = document.createElement("tr");
@@ -88,11 +64,10 @@ export class PlayersHTMLTableElement extends HTMLTableElement {
             const assistsEntry = row.querySelector(`td[assists]`);
             const playedGamesEntry = row.querySelector(`td[games]`);
 
-            playerNames.sort((a, b) => b.date - a.date);
             playerMMRs.sort((a, b) => b.date - a.date);
             
-            nameEntry.textContent = playerNames[0].name;
-            (nameEntry as any).sortProperty = playerNames[0].name.toLowerCase();
+            nameEntry.textContent = playerName;
+            (nameEntry as any).sortProperty = playerName.toLowerCase();
             
             MMREntry.textContent = playerMMRs[0].mmr;
             (MMREntry as any).sortProperty = Number.parseInt(playerMMRs[0].mmr);
@@ -109,34 +84,9 @@ export class PlayersHTMLTableElement extends HTMLTableElement {
             assistsEntry.textContent = rivalry.assists.toString();
             (assistsEntry as any).sortProperty = rivalry.assists;
         }
-        
-        await completed;
 
         tableBody.append(...newRows);
 
         tableBody.toggleAttribute("hidden", false);
     }
-}
-
-async function playerRivalry(events: EventEntry[]) {
-    const stats = {
-        kills: 0,
-        deaths: 0,
-        assists: 0,
-        collateral: 0
-    };
-
-    for (const event of events) {
-        if (event.category == "downedbyme" || event.category == "killedbyme") {
-            stats.kills += 1;
-        } else if (event.category == "downedme" || event.category == "killedme") {
-            stats.deaths += 1;
-        } else if (event.category == "downedbyteammate" || event.category == "killedbyteammate") {
-            stats.assists += 1;
-        } else if (event.category == "downedteammate" || event.category == "killedteammate") {
-            stats.collateral += 1;
-        }
-    }
-
-    return stats;
 }

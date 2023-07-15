@@ -1,4 +1,4 @@
-import { DB, DBDump, GameEntry } from "./DB";
+import { DB } from "./DB";
 
 export class GamesHTMLTableElement extends HTMLTableElement {
     static #db: DB;
@@ -8,39 +8,20 @@ export class GamesHTMLTableElement extends HTMLTableElement {
     }
 
     connectedCallback() {
-        GamesHTMLTableElement.#db.addEventListener("change", async (event: CustomEvent) => {
-            const stores: [keyof DBDump] = [...event.detail.stores] as any;
-
-            if (stores.includes("game") || stores.includes("teamMember")) {
-                await this.update();
-            }
-        });
-
-        if (GamesHTMLTableElement.#db.ready) this.update(); // Fire-and-Forget
-        else {
-            GamesHTMLTableElement.#db.addEventListener("ready", async () => {
-                await this.update();
-            })
-        }
+        GamesHTMLTableElement.#db.onChange(["game", "teamMember"], () => this.update());
     }
 
     async update() {
-        const { stores, completed } = GamesHTMLTableElement.#db.transaction([
-            "game", "teamMember"
-        ], "readonly");
-
-        const games: GameEntry[] = await DB.do(() => stores.game.index("date").getAll());
-
         const tableBody = this.querySelector("tbody");
 
         const newRows = [];
 
-        for (const game of games) {
+        for await (const game of GamesHTMLTableElement.#db.games({ index: "date" })) {
             const possibleRow = tableBody.querySelector(`tr[game="${game.id}"]`);
     
             if (possibleRow) continue;
-    
-            const playerCount = await DB.do(() => stores.teamMember.index("game").count(game.id));
+
+            const playerCount = await GamesHTMLTableElement.#db.teamMembers({ index: "game" }).count(game.id);
     
             const row = document.createElement("tr");
             const dateEntry = document.createElement("td");
@@ -66,8 +47,6 @@ export class GamesHTMLTableElement extends HTMLTableElement {
             playerCountEntry.textContent = playerCount.toString();
             (playerCountEntry as any).sortProperty = playerCount;
         }
-
-        await completed;
 
         tableBody.append(...newRows);
 
