@@ -9,7 +9,7 @@ export function IDBRequestAsync<T>(request: IDBRequest<T>): Promise<T> {
         };
 
         request.onerror = (event) => {
-            console.error("DB Operation Failed", event);
+            console.error("DB Request Failed", event);
             reject(event);
         };
     });

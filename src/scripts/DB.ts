@@ -1,4 +1,4 @@
-import { IDBDatabaseAsync, createSchema } from "./IDBAsync/IDBDatabaseAsync";
+import { IDBDatabaseAsync } from "./IDBAsync/IDBDatabaseAsync";
 import { IDBObjectStoreAsyncOptions } from "./IDBAsync/IDBObjectStoreAsync";
 
 const TABLES = {
@@ -67,7 +67,6 @@ const TABLES = {
 
 const MIGRATIONS = {
     0: (db: IDBDatabase) => {
-        //createSchema(db, TABLES);
         console.trace("Applying Migration 0: DB Initialisation");
 
         const game = db.createObjectStore("game", { keyPath: "id" });
@@ -167,6 +166,20 @@ export class DB extends IDBDatabaseAsync<"HuntShowStats", typeof MIGRATIONS, Sch
         super("HuntShowStats", 1, MIGRATIONS);
     }
 
+    get games() { return this.#store("game"); }
+
+    get teams() { return this.#store("team"); }
+
+    get teamMembers() { return this.#store("teamMember"); }
+
+    get profiles() { return this.#store("profile"); }
+
+    get playerNames() { return this.#store("playerName"); }
+
+    get playerMMRs() { return this.#store("playerMMR"); }
+
+    get events() { return this.#store("event"); }
+
     async currentPlayerName(id: Schema["profile"]["id"]): Promise<string> {
         let playerName = null;
         let newestDate = 0;
@@ -247,17 +260,9 @@ export class DB extends IDBDatabaseAsync<"HuntShowStats", typeof MIGRATIONS, Sch
         return stats;
     }
 
-    get games() { return (options?: IDBObjectStoreAsyncOptions<keyof typeof TABLES["game"]["indexes"]>) => this.store("game", options); }
-
-    get teams() { return (options?: IDBObjectStoreAsyncOptions<keyof typeof TABLES["team"]["indexes"]>) => this.store("team", options); }
-
-    get teamMembers() { return (options?: IDBObjectStoreAsyncOptions<keyof typeof TABLES["teamMember"]["indexes"]>) => this.store("teamMember", options); }
-
-    get profiles() { return (options?: IDBObjectStoreAsyncOptions<keyof typeof TABLES["profile"]["indexes"]>) => this.store("profile", options); }
-
-    get playerNames() { return (options?: IDBObjectStoreAsyncOptions<keyof typeof TABLES["playerName"]["indexes"]>) => this.store("playerName", options); }
-
-    get playerMMRs() { return (options?: IDBObjectStoreAsyncOptions<keyof typeof TABLES["playerMMR"]["indexes"]>) => this.store("playerMMR", options); }
-
-    get events() { return (options?: IDBObjectStoreAsyncOptions<keyof typeof TABLES["event"]["indexes"]>) => this.store("event", options); }
+    #store<K extends keyof typeof TABLES>(key: K) {
+        type Options = IDBObjectStoreAsyncOptions<keyof typeof TABLES[K]["indexes"]>;
+        
+        return (options?: Options) => this.store(key, options);
+    }
 }

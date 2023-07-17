@@ -1,3 +1,4 @@
+import { IDBDatabaseMigrations, IDBDatabaseSchema, IDBDatabaseTableSchema } from "./IDBDatabaseSchema";
 import { IDBObjectStoreAsync, IDBObjectStoreAsyncOptions } from "./IDBObjectStoreAsync";
 import { IDBRequestAsync } from "./IDBRequestAsync";
 
@@ -45,24 +46,24 @@ export class IDBDatabaseAsync<
         this.db = await new Promise((resolve, reject) => {
             const request = indexedDB.open(this.#name, this.#version as number);
             
-            request.onerror = (event) => {
+            request.onerror = (event: IDBRequestEvent<IDBDatabase>) => {
                 console.error("Could not open an IndexDB", event);
 
                 reject(event);
             };
             
-            request.onsuccess = (event) => {
+            request.onsuccess = (event: IDBRequestEvent<IDBDatabase>) => {
                 console.trace("DB Opened", event);
 
-                const db: IDBDatabase = (event.target as any).result;
+                const db = event.target.result;
 
                 resolve(db);
             };
 
-            request.onupgradeneeded = (event) => {
+            request.onupgradeneeded = (event: IDBVersionChangeEvent & IDBRequestEvent<IDBDatabase>) => {
                 console.trace("DB Upgrade Requested", event);
 
-                const db: IDBDatabase = (event.target as any).result;
+                const db = event.target.result;
 
                 let currentVersion = event.oldVersion;
                 while (currentVersion != event.newVersion) {
@@ -111,6 +112,11 @@ export class IDBDatabaseAsync<
         const transaction = this.db.transaction(allStores, mode, options);
 
         transaction.oncomplete = (event) => {
+            this.#activeTransaction = null;
+        };
+
+        transaction.onabort = (event) => {
+            console.error("DB Transaction Aborted", event);
             this.#activeTransaction = null;
         };
 
@@ -189,8 +195,8 @@ export class IDBDatabaseAsync<
      * @param callback Callback to execute once a change is detected.
      */
     onChange(storeNames: (keyof Schema)[], callback: () => unknown) {
-        this.addEventListener("change", (event: CustomEvent) => {
-            const stores: [keyof Schema] = [...event.detail.stores] as any;
+        this.addEventListener("change", (event: DBChangeEvent<Schema>) => {
+            const stores = [...event.detail.stores];
 
             for (const name of storeNames) {
                 if (stores.includes(name)) {
@@ -211,37 +217,15 @@ export class IDBDatabaseAsync<
     }
 }
 
-export type IDBDatabaseSchema = {
-    [key: string]: any;
-};
-
-export type IDBDatabaseMigrations = {
-    [key: number]: (db: IDBDatabase) => keyof IDBDatabaseMigrations;
-};
-
-export type IDBDatabaseTableSchema<Schema extends IDBDatabaseSchema> = {
-    [key in keyof Schema]: {
-        key: keyof Schema[key] | Iterable<keyof Schema[key]>;
-        indexes: {
-            [index: string]: keyof Schema[key] | Iterable<keyof Schema[key]>;
-        }
-    }
-};
-
-export function createSchema<Schema extends IDBDatabaseSchema, Tables extends IDBDatabaseTableSchema<Schema>>(db: IDBDatabase, tables: Tables) {
-    for (const tableName in tables) {
-        const table = tables[tableName];
-
-        const store = db.createObjectStore(tableName, { keyPath: table.key as string | string[] });
-
-        for (const indexName in table.indexes) {
-            const index = table.indexes[indexName];
-            store.createIndex(indexName, index as string | string[], { unique: false });
-        }
-    }
-}
-
 type Table<Schema> = {
     [key in keyof Schema]: Schema[key][];
 }
+
+type DBChangeEvent<Schema> = CustomEvent<{
+    stores: [keyof Schema]
+}>;
+
+type IDBRequestEvent<T> = Event & {
+    target: IDBRequest<T>
+};
 

@@ -1,7 +1,11 @@
+import { Queue } from "./Queue";
+
 /**
  * Unwraps an event listener into an async iterator, allowing the user to use `break` to end event listening.
  */
-export class EventListnerAsyncIterator<EventType extends string> {
+export class EventQueue<
+    EventType extends Event = Event
+> {
     /**
      * Get the current object as an `AsyncIterator`
      * @returns Itself
@@ -23,7 +27,7 @@ export class EventListnerAsyncIterator<EventType extends string> {
     /**
      * Promise representing the IndexedDB having a new item ready for the caller.
      */
-    #push: Promise<IteratorResult<Event>> = null;
+    #push: Promise<void> = null;
 
     /**
      * Resolves `this.#pull`, indicating a new item has been requested.
@@ -33,45 +37,68 @@ export class EventListnerAsyncIterator<EventType extends string> {
     /**
      * Resolves `this.#push`, indicating a new item is available.
      */
-    #resolvePush: (result: IteratorResult<Event>) => void;
+    #resolvePush: () => void;
 
-    constructor(target: EventTarget, type: EventType) {
+    /**
+     * Replace the `#pull` promise with a new one.
+     */
+    #replacePull() {
         this.#pull = new Promise((resolve) => {
             this.#resolvePull = resolve;
         });
+    }
 
+    /**
+     * Replace the `#push` promise with a new one.
+     */
+    #replacePush() {
         this.#push = new Promise((resolve) => {
             this.#resolvePush = resolve;
         });
+    }
 
-        const reactor = async (event: Event) => {
+    /**
+     * Queue of iteration results. This is to handle the case where the caller
+     * takes longer to process the event than the event producer does to dispatch them.
+     * 
+     * Newest events are placed at the 0 index (`unshift`), and oldest are popped off the end (`pop`)
+     */
+    #queue: Queue<IteratorResult<EventType>> = new Queue();
+
+    constructor(target: EventTarget, type: string) {
+        this.#replacePull();
+        this.#replacePush();
+
+        const reactor = async (event: EventType) => {
             const more = await this.#pull;
 
             if (!more) {
                 target.removeEventListener(type, reactor);
 
-                this.#resolvePush({
+                this.#queue.pushBack({
                     done: true,
                     value: undefined
                 });
 
+                this.#resolvePush();
+
                 return;
             }
 
-            this.#pull = new Promise((resolve) => {
-                this.#resolvePull = resolve;
-            });
+            this.#replacePull();
 
-            this.#resolvePush({
+            this.#queue.pushBack({
                 done: false,
                 value: event
             });
+
+            this.#resolvePush();
         };
 
         target.addEventListener(type, reactor);
     }
 
-    async next(): Promise<IteratorResult<Event>> {
+    async next(): Promise<IteratorResult<EventType>> {
         if (this.#done) return {
             done: true,
             value: undefined
@@ -79,20 +106,25 @@ export class EventListnerAsyncIterator<EventType extends string> {
 
         this.#resolvePull(true);
 
-        const result = await this.#push;
+        // Don't need to wait for a push if there are already events in the queue
+        if (!this.#queue.length) await this.#push;
+
+        const result = this.#queue.popFront();
 
         if (result.done) this.#done = true;
 
-        this.#push = new Promise((resolve) => {
-            this.#resolvePush = resolve;
-        });
+        this.#replacePush();
 
         return result;
     }
 
-    async return(): Promise<IteratorResult<Event>> {
+    async return(): Promise<IteratorResult<EventType>> {
         this.#resolvePull(false);
 
-        return await this.#push;
+        await this.#push;
+
+        const result = this.#queue.popBack();
+
+        return result;
     }
 }

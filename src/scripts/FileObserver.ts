@@ -1,4 +1,4 @@
-import { EventListnerAsyncIterator } from "./EventListnerAsyncIterator";
+import { EventQueue } from "./EventQueue";
 
 export class FileObserver extends EventTarget {
     #handle: FileSystemHandle;
@@ -61,8 +61,8 @@ Alternatively, you can copy & paste your file into a different folder (e.g., 'Do
         this.start();
     }
 
-    [Symbol.asyncIterator](): EventListnerAsyncIterator<"change"> {
-        return new EventListnerAsyncIterator(this, "change");
+    [Symbol.asyncIterator](): EventQueue<CustomEvent<File>> {
+        return new EventQueue(this, "change");
     }
 }
 

@@ -37,17 +37,30 @@ export class IDBCursorAsyncIterator<Entry> {
      */
     #resolvePush: (result: IteratorResult<Entry>) => void;
 
-    constructor(request: IDBRequest<IDBCursorWithValue>) {
+    /**
+     * Replace the `#pull` promise with a new one.
+     */
+    #replacePull() {
         this.#pull = new Promise((resolve) => {
             this.#resolvePull = resolve;
         });
+    }
 
+    /**
+     * Replace the `#push` promise with a new one.
+     */
+    #replacePush() {
         this.#push = new Promise((resolve) => {
             this.#resolvePush = resolve;
         });
+    }
 
-        request.onsuccess = async (event) => {
-            const cursor: IDBCursorWithValue = (event.target as any).result;
+    constructor(request: IDBRequest<IDBCursorWithValue>) {
+        this.#replacePull();
+        this.#replacePush();
+
+        request.onsuccess = async (event: IDBRequestSuccessEvent<IDBCursorWithValue>) => {
+            const cursor = event.target.result;
 
             const more = await this.#pull;
 
@@ -56,9 +69,7 @@ export class IDBCursorAsyncIterator<Entry> {
                 value: undefined
             });
 
-            this.#pull = new Promise((resolve) => {
-                this.#resolvePull = resolve;
-            });
+            this.#replacePull();
 
             const entry: Entry = cursor.value;
 
@@ -83,15 +94,22 @@ export class IDBCursorAsyncIterator<Entry> {
 
         if (result.done) this.#done = true;
 
-        this.#push = new Promise((resolve) => {
-            this.#resolvePush = resolve;
-        });
+        this.#replacePush();
 
         return result;
     }
 
+    async return(): Promise<IteratorResult<Entry>> {
+        this.#resolvePull(false);
+
+        return await this.#push;
+    }
+
     /**
      * Drives this iterator to completion, returning all results as an array.
+     * 
+     * NOTE: You probably don't want to use this method, and instead might prefer
+     * a method to more explicitly request all entries from the DB itself.
      * @returns An array of all `Entry`'s
      */
     async all(): Promise<Entry[]> {
@@ -104,3 +122,7 @@ export class IDBCursorAsyncIterator<Entry> {
         return results;
     }
 }
+
+type IDBRequestSuccessEvent<T> = Event & {
+    target: IDBRequest<T>
+};

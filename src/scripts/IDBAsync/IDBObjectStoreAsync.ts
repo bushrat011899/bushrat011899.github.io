@@ -19,14 +19,12 @@ export class IDBObjectStoreAsync<Entry, Indexes extends string | number | symbol
 
     reverse(): this {
         switch (this.#options.direction) {
-            case "next": this.#options.direction = "prev"; break;
-            case "prev": this.#options.direction = "next"; break;
-            case "nextunique": this.#options.direction = "prevunique"; break;
-            case "prevunique": this.#options.direction = "nextunique"; break;
-            default: this.#options.direction = "prev"; break;
+            case "nextunique": return this.direction("prevunique");
+            case "prevunique": return this.direction("nextunique");
+            case "prev": return this.direction("next");
+            case "next":
+            default: return this.direction("prev");
         }
-        
-        return this;
     }
 
     forwards(): this { return this.direction("next"); }
